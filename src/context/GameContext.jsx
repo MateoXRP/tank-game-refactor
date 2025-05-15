@@ -1,71 +1,87 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import Cookies from "js-cookie";
+import React, { createContext, useContext, useState } from "react";
 
 const GameContext = createContext();
 
-export function GameProvider({ children, initialName = "", initialScreen = "login" }) {
-  const [playerName, setPlayerName] = useState(initialName);
-  const [currentScreen, setCurrentScreen] = useState(initialScreen);
-  const [gold, setGold] = useState(60);
-  const [currentLevel, setCurrentLevel] = useState(1);
-  const [currentBattle, setCurrentBattle] = useState(1);
+export const useGame = () => useContext(GameContext);
 
+export const GameProvider = ({ children }) => {
   const [tanks, setTanks] = useState([
     {
       id: 1,
       hp: 100,
       maxHp: 100,
-      attack: 0,
-      defense: 0,
-      level: 1,
-      hasMissile: false,
-      hasAirstrike: false,
+      atk: 10,
+      def: 5,
+      upgrades: { atk: 0, def: 0 },
     },
     {
       id: 2,
       hp: 100,
       maxHp: 100,
-      attack: 0,
-      defense: 0,
-      level: 1,
-      hasMissile: false,
-      hasAirstrike: false,
+      atk: 10,
+      def: 5,
+      upgrades: { atk: 0, def: 0 },
     },
   ]);
 
-  const [cooldowns, setCooldowns] = useState({
-    missile: [false, false],
-    airstrike: [false, false],
-  });
+  const [gold, setGold] = useState(60);
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [currentBattle, setCurrentBattle] = useState(1);
+  const [playerName, setPlayerName] = useState("");
+  const [currentScreen, setCurrentScreen] = useState("shop");
 
-  // Save screen changes
-  useEffect(() => {
-    if (currentScreen) Cookies.set("tankScreen", currentScreen);
-  }, [currentScreen]);
+  const startBattle = () => {
+    setCurrentScreen("battle");
+  };
+
+  const buyUpgrade = (tankId, stat) => {
+    const cost = 20;
+    setTanks(prev =>
+      prev.map(t => {
+        if (t.id !== tankId) return t;
+
+        const newUpgrades = {
+          ...t.upgrades,
+          [stat]: (t.upgrades[stat] || 0) + 1,
+        };
+
+        return {
+          ...t,
+          upgrades: newUpgrades,
+          [stat]: t[stat] + 5,
+        };
+      })
+    );
+    setGold(g => g - cost);
+  };
+
+  // ✅ Shared helper function
+  function hasUpgrade(tank, stat) {
+    return tank.upgrades?.[stat] || 0;
+  }
 
   return (
     <GameContext.Provider
       value={{
-        playerName,
-        setPlayerName,
         tanks,
         setTanks,
-        currentScreen,
-        setCurrentScreen,
+        gold,
+        setGold,
         currentLevel,
         setCurrentLevel,
         currentBattle,
         setCurrentBattle,
-        cooldowns,
-        setCooldowns,
-        gold,
-        setGold,
+        playerName,
+        setPlayerName,
+        currentScreen,
+        setCurrentScreen,
+        startBattle,
+        buyUpgrade,
+        hasUpgrade, // ✅ Exposed globally
       }}
     >
       {children}
     </GameContext.Provider>
   );
-}
-
-export const useGame = () => useContext(GameContext);
+};
 
