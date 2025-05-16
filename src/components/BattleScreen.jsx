@@ -40,8 +40,9 @@ export default function BattleScreen() {
   } = useWeapons();
 
   const currentTank = tanks[currentTankIndex];
-useEffect(() => {
-  if (!currentTank || currentTank.hp <= 0) return;
+
+  useEffect(() => {
+  if (!currentTank || currentTank.hp <= 0 || enemyTurnActive) return;
 
   const priority = ["airstrike", "missile", "cannon", "machinegun"];
   for (const weapon of priority) {
@@ -50,7 +51,7 @@ useEffect(() => {
       break;
     }
   }
-}, [currentTankIndex]);
+}, [currentTankIndex, enemyTurnActive]);
   const liveTanks = tanks.filter((t) => t.hp > 0);
   const liveEnemies = enemyState.filter((e) => e.hp > 0);
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -66,7 +67,7 @@ useEffect(() => {
   } else {
     setSelectedEnemyId(null);
   }
-}, [enemyState, currentTankIndex]);
+}, [enemyState, currentTankIndex, enemyTurnActive]);
 
   useEffect(() => {
     if (currentTank.hp <= 0 && !enemyTurnActive && !battleEnded) {
