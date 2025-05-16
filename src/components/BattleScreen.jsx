@@ -39,11 +39,10 @@ export default function BattleScreen() {
     resetWeapons,
   } = useWeapons();
 
+  const currentTank = tanks[currentTankIndex];
   const liveTanks = tanks.filter((t) => t.hp > 0);
   const liveEnemies = enemyState.filter((e) => e.hp > 0);
-  const currentTank = tanks[currentTankIndex];
 
-  // 🛠️ Auto-skip dead tanks
   useEffect(() => {
     if (currentTank.hp <= 0 && !enemyTurnActive && !battleEnded) {
       const next = (currentTankIndex + 1) % tanks.length;
@@ -53,6 +52,8 @@ export default function BattleScreen() {
       }
     }
   }, [currentTankIndex, currentTank.hp, enemyTurnActive, battleEnded]);
+
+  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
   const getDamage = (weapon) => {
     switch (weapon) {
@@ -64,7 +65,7 @@ export default function BattleScreen() {
     }
   };
 
-  const handleFire = () => {
+  const handleFire = async () => {
     if (!selectedWeapon || currentTank.hp <= 0) return;
 
     advanceCooldownFor(currentTank.id);
@@ -72,59 +73,60 @@ export default function BattleScreen() {
 
     const damage = getDamage(selectedWeapon);
 
+    setFiringTankId(currentTank.id);
+    await sleep(300);
+
+    let newEnemyState = [...enemyState];
+    let newLog = [];
+
     if (selectedWeapon === "airstrike") {
-      enemyState.forEach((enemy) => {
-        setTimeout(() => {
-          setFiringTankId(currentTank.id);
-          setDamagedEnemyId(enemy.id);
-          setEnemyState((prev) =>
-            prev.map((e) =>
-              e.id === enemy.id
-                ? { ...e, hp: Math.max(e.hp - damage, 0) }
-                : e
-            )
-          );
-          setLog((prev) => [
-            `💥 Tank ${currentTank.id} airstruck ${enemy.name} for ${damage}.`,
-            ...prev,
-          ]);
-        }, 300);
+      newEnemyState = newEnemyState.map((enemy) => {
+        if (enemy.hp <= 0) return enemy;
+        const newHp = Math.max(enemy.hp - damage, 0);
+        if (newHp < enemy.hp) {
+          newLog.push(`💥 Tank ${currentTank.id} airstruck ${enemy.name} for ${damage}.`);
+        }
+        return { ...enemy, hp: newHp };
       });
     } else {
-      const target = enemyState.find((e) => e.id === selectedEnemyId);
+      const target = newEnemyState.find((e) => e.id === selectedEnemyId);
       if (!target) return;
 
-      setFiringTankId(currentTank.id);
+      setDamagedEnemyId(target.id);
+      await sleep(200);
 
-      setTimeout(() => {
-        setDamagedEnemyId(target.id);
-        setEnemyState((prev) =>
-          prev.map((e) =>
-            e.id === target.id
-              ? { ...e, hp: Math.max(e.hp - damage, 0) }
-              : e
-          )
-        );
-        setLog((prev) => [
-          `💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`,
-          ...prev,
-        ]);
-      }, 400);
+      newEnemyState = newEnemyState.map((e) =>
+        e.id === target.id ? { ...e, hp: Math.max(e.hp - damage, 0) } : e
+      );
+
+      newLog.push(
+        `💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`
+      );
     }
 
-    setTimeout(() => {
-      setFiringTankId(null);
-      setDamagedEnemyId(null);
-      setSelectedWeapon(null);
-      setSelectedEnemyId(null);
+    setEnemyState(newEnemyState);
+    setLog((prev) => [...newLog, ...prev]);
 
-      const nextTankIndex = (currentTankIndex + 1) % tanks.length;
-      setCurrentTankIndex(nextTankIndex);
+    await sleep(400);
 
-      if (nextTankIndex === 0) {
-        doEnemyTurn();
-      }
-    }, 1000);
+    setFiringTankId(null);
+    setDamagedEnemyId(null);
+    setSelectedWeapon(null);
+    setSelectedEnemyId(null);
+
+    const allEnemiesDead = newEnemyState.every((e) => e.hp <= 0);
+    if (allEnemiesDead) {
+      setBattleEnded(true);
+      endBattleVictory();
+      return;
+    }
+
+    const nextTankIndex = (currentTankIndex + 1) % tanks.length;
+    setCurrentTankIndex(nextTankIndex);
+
+    if (nextTankIndex === 0) {
+      await doEnemyTurn(newEnemyState);
+    }
   };
 
   useEffect(() => {
@@ -165,12 +167,12 @@ export default function BattleScreen() {
     setTimeout(() => setCurrentScreen("gameover"), 800);
   };
 
-  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-
-  const doEnemyTurn = async () => {
+  const doEnemyTurn = async (freshEnemyState) => {
     setEnemyTurnActive(true);
 
-    for (const enemy of liveEnemies) {
+    const enemies = freshEnemyState.filter((e) => e.hp > 0);
+
+    for (const enemy of enemies) {
       const target = chooseTargetTank();
       const damage = Math.floor(Math.random() * 5 + 5 + currentLevel);
 
@@ -190,13 +192,13 @@ export default function BattleScreen() {
             : t
         )
       );
+
       setLog((prev) => [
         `💣 ${enemy.name} hit Tank ${target.id} for ${damage} damage.`,
         ...prev,
       ]);
 
       await sleep(500);
-
       setFiringTankId(null);
       setDamagedPlayerId(null);
       await sleep(300);
@@ -244,7 +246,9 @@ export default function BattleScreen() {
                 <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden my-1">
                   <div
                     className="bg-green-500 h-full"
-                    style={{ width: `${(t.hp / t.maxHp) * 100}%` }}
+                    style={{
+                      width: `${(t.hp / t.maxHp) * 100}%`,
+                    }}
                   ></div>
                 </div>
                 <p className="text-xs">
@@ -269,7 +273,9 @@ export default function BattleScreen() {
                 <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden my-1">
                   <div
                     className="bg-red-500 h-full"
-                    style={{ width: `${(e.hp / e.maxHp) * 100}%` }}
+                    style={{
+                      width: `${(e.hp / e.maxHp) * 100}%`,
+                    }}
                   ></div>
                 </div>
                 <p className="text-xs">
