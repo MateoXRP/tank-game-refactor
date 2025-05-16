@@ -4,6 +4,7 @@ import { useGame } from "../context/GameContext";
 import useWeapons from "../hooks/useWeapons";
 import tankImg from "/tank1.png";
 import enemyImg from "/enemy.png";
+import BattleLog from "./BattleLog";
 
 export default function BattleScreen() {
   const {
@@ -380,13 +381,11 @@ export default function BattleScreen() {
         </button>
       </div>
 
-      <div className="mt-8 max-w-md w-full bg-gray-800 rounded-lg p-4 text-sm text-white text-left">
-        {log.length === 0 ? (
-          <p className="text-center">📝 Battle log will appear here...</p>
-        ) : (
-          log.map((entry, i) => <p key={i}>• {entry}</p>)
-        )}
-      </div>
+      <div className="mt-3">
+  <BattleLog log={log} />
+</div>
+
+
     </div>
   );
 }
