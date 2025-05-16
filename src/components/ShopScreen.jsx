@@ -5,26 +5,23 @@ export default function ShopScreen() {
   const {
     tanks,
     gold,
-    currentLevel,
-    currentBattle,
     buyUpgrade,
     hasUpgrade,
-    startBattle,
+    currentLevel,
+    currentBattle,
+    setCurrentScreen,
+    repairTank,
   } = useGame();
 
-  function isFullyUpgraded(tank) {
-    return hasUpgrade(tank, "atk") === 5 && hasUpgrade(tank, "def") === 5;
-  }
+  const startBattle = () => {
+    setCurrentScreen("battle");
+  };
 
-  function canRepair(tank) {
-    return tank.hp < 100 && gold >= 10;
-  }
+  const isFullyUpgraded = (tank) =>
+    hasUpgrade(tank, "atk") === 5 && hasUpgrade(tank, "def") === 5;
 
-  function repairTank(tankId) {
-    if (gold < 10) return;
-    const event = new CustomEvent("repair-tank", { detail: tankId });
-    window.dispatchEvent(event);
-  }
+  const canRepair = (tank) =>
+    tank.hp < tank.maxHp && gold >= 10;
 
   return (
     <div className="min-h-screen bg-black text-white font-mono p-4 flex flex-col items-center">
@@ -55,6 +52,7 @@ export default function ShopScreen() {
             {isFullyUpgraded(tank) && (
               <p className="text-green-400 text-sm mb-2">🧨 Missile Ready</p>
             )}
+
             <div className="flex justify-center gap-4 my-2">
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
@@ -83,6 +81,7 @@ export default function ShopScreen() {
                 <span className="text-xs text-green-300 ml-1">DEF</span>
               </div>
             </div>
+
             <div className="flex justify-center space-x-2 mt-2 flex-wrap gap-2">
               <button
                 disabled={hasUpgrade(tank, "atk") >= 5 || gold < 20}

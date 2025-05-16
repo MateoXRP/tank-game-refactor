@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { useGame } from "../context/GameContext";
 import useWeapons from "../hooks/useWeapons";
@@ -6,7 +6,17 @@ import tankImg from "/tank1.png";
 import enemyImg from "/enemy.png";
 
 export default function BattleScreen() {
-  const { tanks, setTanks, currentLevel, currentBattle, gold } = useGame();
+  const {
+    tanks,
+    setTanks,
+    currentLevel,
+    setCurrentLevel,
+    currentBattle,
+    setCurrentBattle,
+    gold,
+    setGold,
+    setCurrentScreen,
+  } = useGame();
 
   const [selectedEnemyId, setSelectedEnemyId] = useState(null);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
@@ -20,6 +30,7 @@ export default function BattleScreen() {
   const [damagedPlayerId, setDamagedPlayerId] = useState(null);
   const [currentTankIndex, setCurrentTankIndex] = useState(0);
   const [enemyTurnActive, setEnemyTurnActive] = useState(false);
+  const [battleEnded, setBattleEnded] = useState(false);
 
   const {
     isWeaponAvailable,
@@ -28,8 +39,20 @@ export default function BattleScreen() {
     resetWeapons,
   } = useWeapons();
 
+  const liveTanks = tanks.filter((t) => t.hp > 0);
+  const liveEnemies = enemyState.filter((e) => e.hp > 0);
   const currentTank = tanks[currentTankIndex];
-  const currentTurn = `Tank ${currentTank.id}`;
+
+  // 🛠️ Auto-skip dead tanks
+  useEffect(() => {
+    if (currentTank.hp <= 0 && !enemyTurnActive && !battleEnded) {
+      const next = (currentTankIndex + 1) % tanks.length;
+      const nextTank = tanks[next];
+      if (nextTank && nextTank.hp > 0) {
+        setCurrentTankIndex(next);
+      }
+    }
+  }, [currentTankIndex, currentTank.hp, enemyTurnActive, battleEnded]);
 
   const getDamage = (weapon) => {
     switch (weapon) {
@@ -42,11 +65,9 @@ export default function BattleScreen() {
   };
 
   const handleFire = () => {
-    if (!selectedWeapon) return;
+    if (!selectedWeapon || currentTank.hp <= 0) return;
 
-    // ✅ Cooldowns tick at start of tank's turn
     advanceCooldownFor(currentTank.id);
-
     markWeaponUsed(currentTank.id, selectedWeapon);
 
     const damage = getDamage(selectedWeapon);
@@ -64,28 +85,28 @@ export default function BattleScreen() {
             )
           );
           setLog((prev) => [
-            `💥 ${currentTurn} used Airstrike on ${enemy.name} for ${damage} damage.`,
+            `💥 Tank ${currentTank.id} airstruck ${enemy.name} for ${damage}.`,
             ...prev,
           ]);
         }, 300);
       });
     } else {
-      if (!selectedEnemyId) return;
       const target = enemyState.find((e) => e.id === selectedEnemyId);
+      if (!target) return;
 
       setFiringTankId(currentTank.id);
 
       setTimeout(() => {
-        setDamagedEnemyId(selectedEnemyId);
+        setDamagedEnemyId(target.id);
         setEnemyState((prev) =>
           prev.map((e) =>
-            e.id === selectedEnemyId
+            e.id === target.id
               ? { ...e, hp: Math.max(e.hp - damage, 0) }
               : e
           )
         );
         setLog((prev) => [
-          `💥 ${currentTurn} hit ${target.name} with ${selectedWeapon} for ${damage} damage.`,
+          `💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`,
           ...prev,
         ]);
       }, 400);
@@ -97,25 +118,61 @@ export default function BattleScreen() {
       setSelectedWeapon(null);
       setSelectedEnemyId(null);
 
-      if (currentTankIndex === 1) {
+      const nextTankIndex = (currentTankIndex + 1) % tanks.length;
+      setCurrentTankIndex(nextTankIndex);
+
+      if (nextTankIndex === 0) {
         doEnemyTurn();
-        setCurrentTankIndex(0);
-      } else {
-        setCurrentTankIndex((prev) => (prev + 1) % tanks.length);
       }
     }, 1000);
   };
 
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  useEffect(() => {
+    if (battleEnded) return;
+
+    if (liveEnemies.length === 0) {
+      setBattleEnded(true);
+      endBattleVictory();
+    } else if (liveTanks.length === 0) {
+      setBattleEnded(true);
+      endBattleDefeat();
+    }
+  }, [tanks, enemyState]);
+
+  const endBattleVictory = () => {
+    const goldEarned = 20 * enemyState.length;
+    setGold((prev) => prev + goldEarned);
+
+    setTanks((prev) =>
+      prev.map((t) => ({
+        ...t,
+        hp: Math.min(t.hp + 25, t.maxHp),
+      }))
+    );
+
+    if (currentBattle < 5) {
+      setCurrentBattle(currentBattle + 1);
+    } else {
+      setCurrentLevel(currentLevel + 1);
+      setCurrentBattle(1);
+    }
+
+    resetWeapons();
+    setTimeout(() => setCurrentScreen("shop"), 1200);
+  };
+
+  const endBattleDefeat = () => {
+    setTimeout(() => setCurrentScreen("gameover"), 800);
+  };
+
+  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
   const doEnemyTurn = async () => {
     setEnemyTurnActive(true);
-    const liveEnemies = enemyState.filter((e) => e.hp > 0);
 
     for (const enemy of liveEnemies) {
       const target = chooseTargetTank();
-      const base = 5 + currentLevel;
-      const damage = Math.floor(Math.random() * 5 + base);
+      const damage = Math.floor(Math.random() * 5 + 5 + currentLevel);
 
       flushSync(() => {
         setFiringTankId(null);
@@ -149,77 +206,49 @@ export default function BattleScreen() {
   };
 
   const chooseTargetTank = () => {
-    const liveTanks = tanks.filter((t) => t.hp > 0);
-    if (liveTanks.length === 1) return liveTanks[0];
-
-    const [a, b] = liveTanks;
-    if (a.defense !== b.defense) {
-      return a.defense < b.defense ? a : b;
-    } else if (a.hp !== b.hp) {
-      return a.hp < b.hp ? a : b;
-    } else {
-      return a.id === 1 ? a : b;
-    }
+    const live = tanks.filter((t) => t.hp > 0);
+    if (live.length === 1) return live[0];
+    const [a, b] = live;
+    if (a.defense !== b.defense) return a.defense < b.defense ? a : b;
+    if (a.hp !== b.hp) return a.hp < b.hp ? a : b;
+    return a.id === 1 ? a : b;
   };
 
   const weaponList = [
-    {
-      label: "Machine Gun",
-      key: "machinegun",
-      color: "bg-blue-600 hover:bg-blue-700",
-    },
-    {
-      label: "Cannon",
-      key: "cannon",
-      color: "bg-orange-600 hover:bg-orange-700",
-    },
-    {
-      label: "Missile",
-      key: "missile",
-      color: "bg-purple-600 hover:bg-purple-700",
-    },
-    {
-      label: "Airstrike",
-      key: "airstrike",
-      color: "bg-red-600 hover:bg-red-700",
-    },
+    { label: "Machine Gun", key: "machinegun", color: "bg-blue-600" },
+    { label: "Cannon", key: "cannon", color: "bg-orange-600" },
+    { label: "Missile", key: "missile", color: "bg-purple-600" },
+    { label: "Airstrike", key: "airstrike", color: "bg-red-600" },
   ];
 
   return (
     <div className="min-h-screen bg-black text-white font-mono p-4 flex flex-col items-center">
       <h1 className="text-3xl font-bold text-yellow-300 mb-1">🪖 Tank Game</h1>
+      <p className="text-sm text-gray-300">
+        Level {currentLevel} – Battle {currentBattle}/5
+      </p>
+      <p className="text-sm text-yellow-400 font-bold mt-1">💰 Gold: {gold}</p>
 
-      <div className="text-center mb-4">
-        <p className="text-sm text-gray-300">
-          Level {currentLevel} – Battle {currentBattle}/5
-        </p>
-        <p className="text-sm text-yellow-400 font-bold mt-1">💰 Gold: {gold}</p>
-      </div>
-
-      {/* Tank Layout */}
-      <div className="flex justify-center items-center gap-28 max-w-[600px] mt-4">
+      <div className="flex justify-center gap-28 mt-4 max-w-[600px]">
         <div className="flex flex-col items-center gap-3">
-          {tanks.map((tank) => (
-            <div key={tank.id} className="flex flex-col items-center">
+          {tanks.map((t) => (
+            <div key={t.id} className="flex flex-col items-center">
               <img
                 src={tankImg}
-                alt="Player Tank"
-                className={`w-24 ${
-                  firingTankId === tank.id ? "shake" : ""
-                } ${damagedPlayerId === tank.id ? "glow-red shake" : ""}`}
+                className={`w-24 ${firingTankId === t.id ? "shake" : ""} ${
+                  damagedPlayerId === t.id ? "glow-red shake" : ""
+                }`}
               />
-              <div className="text-center mt-1 text-sm">
-                <p>Tank {tank.id}</p>
+              <div className="text-sm text-center mt-1">
+                <p>Tank {t.id}</p>
                 <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden my-1">
                   <div
                     className="bg-green-500 h-full"
-                    style={{
-                      width: `${(tank.hp / tank.maxHp) * 100}%`,
-                    }}
+                    style={{ width: `${(t.hp / t.maxHp) * 100}%` }}
                   ></div>
                 </div>
                 <p className="text-xs">
-                  HP: {tank.hp} / {tank.maxHp}
+                  HP: {t.hp} / {t.maxHp}
                 </p>
               </div>
             </div>
@@ -227,27 +256,24 @@ export default function BattleScreen() {
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          {enemyState.map((enemy) => (
-            <div key={enemy.id} className="flex flex-col items-center">
+          {enemyState.map((e) => (
+            <div key={e.id} className="flex flex-col items-center">
               <img
                 src={enemyImg}
-                alt="Enemy Tank"
-                className={`w-24 ${
-                  firingTankId === enemy.id + 100 ? "shake" : ""
-                } ${damagedEnemyId === enemy.id ? "glow-red shake" : ""}`}
+                className={`w-24 ${firingTankId === e.id + 100 ? "shake" : ""} ${
+                  damagedEnemyId === e.id ? "glow-red shake" : ""
+                }`}
               />
-              <div className="text-center mt-1 text-sm">
-                <p>{enemy.name}</p>
+              <div className="text-sm text-center mt-1">
+                <p>{e.name}</p>
                 <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden my-1">
                   <div
                     className="bg-red-500 h-full"
-                    style={{
-                      width: `${(enemy.hp / enemy.maxHp) * 100}%`,
-                    }}
+                    style={{ width: `${(e.hp / e.maxHp) * 100}%` }}
                   ></div>
                 </div>
                 <p className="text-xs">
-                  HP: {enemy.hp} / {enemy.maxHp}
+                  HP: {e.hp} / {e.maxHp}
                 </p>
               </div>
             </div>
@@ -255,24 +281,25 @@ export default function BattleScreen() {
         </div>
       </div>
 
-      <p className="mt-8 text-sm text-green-400 font-semibold">
-        🎯 Current Turn: {currentTurn}
+      <p className="mt-6 text-sm text-green-400 font-semibold">
+        🎯 Current Turn: Tank {currentTank.id}
       </p>
 
       <div className="mt-4 text-center">
         <p className="text-sm mb-2">Select Target</p>
         <div className="flex justify-center gap-3">
-          {enemyState.map((enemy) => (
+          {enemyState.map((e) => (
             <button
-              key={enemy.id}
-              onClick={() => setSelectedEnemyId(enemy.id)}
+              key={e.id}
+              onClick={() => setSelectedEnemyId(e.id)}
+              disabled={e.hp <= 0}
               className={`px-4 py-1 text-sm rounded ${
-                selectedEnemyId === enemy.id
+                selectedEnemyId === e.id
                   ? "bg-yellow-400 text-black font-bold"
                   : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
-              {enemy.name}
+              {e.name}
             </button>
           ))}
         </div>
@@ -303,9 +330,11 @@ export default function BattleScreen() {
       <div className="mt-4 text-center">
         <button
           onClick={handleFire}
-          disabled={!selectedWeapon || enemyTurnActive}
+          disabled={
+            !selectedWeapon || enemyTurnActive || currentTank.hp <= 0
+          }
           className={`px-5 py-2 rounded font-bold mt-2 ${
-            !selectedWeapon || enemyTurnActive
+            !selectedWeapon || enemyTurnActive || currentTank.hp <= 0
               ? "bg-gray-600 text-gray-300 cursor-not-allowed"
               : "bg-yellow-500 hover:bg-yellow-600 text-black"
           }`}
