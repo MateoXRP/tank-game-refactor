@@ -6,6 +6,7 @@ import tankImg from "/tank1.png";
 import enemyImg from "/enemy.png";
 import BattleLog from "./BattleLog";
 import TankDisplay from "./TankDisplay";
+import useAutoSelectEnemy from "../hooks/useAutoSelectEnemy";
 
 
 export default function BattleScreen() {
@@ -59,18 +60,7 @@ export default function BattleScreen() {
   const liveEnemies = enemyState.filter((e) => e.hp > 0);
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-  useEffect(() => {
-  const e1 = enemyState.find(e => e.id === 1);
-  const e2 = enemyState.find(e => e.id === 2);
-
-  if (e1 && e1.hp > 0) {
-    setSelectedEnemyId(1);
-  } else if (e2 && e2.hp > 0) {
-    setSelectedEnemyId(2);
-  } else {
-    setSelectedEnemyId(null);
-  }
-}, [enemyState, currentTankIndex, enemyTurnActive]);
+  useAutoSelectEnemy(enemyState, currentTankIndex, enemyTurnActive, setSelectedEnemyId);
 
   useEffect(() => {
     if (currentTank.hp <= 0 && !enemyTurnActive && !battleEnded) {
