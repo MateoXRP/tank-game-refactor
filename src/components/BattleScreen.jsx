@@ -5,6 +5,8 @@ import useWeapons from "../hooks/useWeapons";
 import tankImg from "/tank1.png";
 import enemyImg from "/enemy.png";
 import BattleLog from "./BattleLog";
+import TankDisplay from "./TankDisplay";
+
 
 export default function BattleScreen() {
   const {
@@ -260,60 +262,19 @@ export default function BattleScreen() {
       <p className="text-sm text-yellow-400 font-bold mt-1">💰 Gold: {gold}</p>
 
       <div className="flex justify-center gap-28 mt-4 max-w-[600px]">
-        <div className="flex flex-col items-center gap-3">
-          {tanks.map((t) => (
-            <div key={t.id} className="flex flex-col items-center">
-              <img
-                src={tankImg}
-                className={`w-24 ${firingTankId === t.id ? "shake" : ""} ${
-                  damagedPlayerId === t.id ? "glow-red shake" : ""
-                }`}
-              />
-              <div className="text-sm text-center mt-1">
-                <p>Tank {t.id}</p>
-                <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden my-1">
-                  <div
-                    className="bg-green-500 h-full"
-                    style={{
-                      width: `${(t.hp / t.maxHp) * 100}%`,
-                    }}
-                  ></div>
-                </div>
-                <p className="text-xs">
-                  HP: {t.hp} / {t.maxHp}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-col items-center gap-3">
-          {enemyState.map((e) => (
-            <div key={e.id} className="flex flex-col items-center">
-              <img
-                src={enemyImg}
-                className={`w-24 ${firingTankId === e.id + 100 ? "shake" : ""} ${
-                  damagedEnemyId === e.id ? "glow-red shake" : ""
-                }`}
-              />
-              <div className="text-sm text-center mt-1">
-                <p>{e.name}</p>
-                <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden my-1">
-                  <div
-                    className="bg-red-500 h-full"
-                    style={{
-                      width: `${(e.hp / e.maxHp) * 100}%`,
-                    }}
-                  ></div>
-                </div>
-                <p className="text-xs">
-                  HP: {e.hp} / {e.maxHp}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <TankDisplay
+      entities={tanks}
+      type="player"
+      firingTankId={firingTankId}
+      damagedId={damagedPlayerId}
+      />
+      <TankDisplay
+      entities={enemyState}
+      type="enemy"
+      firingTankId={firingTankId}
+      damagedId={damagedEnemyId}
+  />
+</div>
 
       <p className="mt-6 text-sm text-green-400 font-semibold">
         🎯 Current Turn: Tank {currentTank.id}
