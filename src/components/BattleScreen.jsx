@@ -4,6 +4,7 @@ import { useGame } from "../context/GameContext";
 import useWeapons from "../hooks/useWeapons";
 import useAutoSelectEnemy from "../hooks/useAutoSelectEnemy";
 import { handleVictory, handleDefeat } from "../helpers/VictoryDefeatHandler";
+import doEnemyTurn from "../helpers/doEnemyTurn";
 
 import tankImg from "/tank1.png";
 import enemyImg from "/enemy.png";
@@ -76,27 +77,6 @@ export default function BattleScreen() {
     }
   }, [currentTankIndex, currentTank.hp, enemyTurnActive, battleEnded]);
 
-  useEffect(() => {
-    if (battleEnded) return;
-    if (liveEnemies.length === 0) {
-      setBattleEnded(true);
-      handleVictoryDefeat.handleVictory({
-        enemyState,
-        setGold,
-        setTanks,
-        currentBattle,
-        setCurrentBattle,
-        currentLevel,
-        setCurrentLevel,
-        resetWeapons,
-        setCurrentScreen,
-      });
-    } else if (liveTanks.length === 0) {
-      setBattleEnded(true);
-      handleVictoryDefeat.handleDefeat(setCurrentScreen);
-    }
-  }, [tanks, enemyState]);
-
   const getDamage = (weapon) => {
     switch (weapon) {
       case "machinegun": return 5;
@@ -140,9 +120,7 @@ export default function BattleScreen() {
         e.id === target.id ? { ...e, hp: Math.max(e.hp - damage, 0) } : e
       );
 
-      newLog.push(
-        `💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`
-      );
+      newLog.push(`💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`);
     }
 
     setEnemyState(newEnemyState);
@@ -157,7 +135,7 @@ export default function BattleScreen() {
     const allEnemiesDead = newEnemyState.every((e) => e.hp <= 0);
     if (allEnemiesDead) {
       setBattleEnded(true);
-      handleVictoryDefeat.handleVictory({
+      handleVictory({
         enemyState,
         setGold,
         setTanks,
@@ -179,57 +157,41 @@ export default function BattleScreen() {
     setCurrentTankIndex(nextTankIndex);
     const isBackToStart = nextTankIndex === 0;
     if (isBackToStart || liveTanks.length === 1) {
-      await doEnemyTurn(newEnemyState);
-    }
-  };
-
-  const doEnemyTurn = async (freshEnemyState) => {
-    setEnemyTurnActive(true);
-    const enemies = freshEnemyState.filter((e) => e.hp > 0);
-
-    for (const enemy of enemies) {
-      const target = chooseTargetTank();
-      const damage = Math.floor(Math.random() * 5 + 5 + currentLevel);
-
-      flushSync(() => {
-        setFiringTankId(null);
-        setDamagedPlayerId(null);
+      await doEnemyTurn({
+        freshEnemyState: newEnemyState,
+        setEnemyTurnActive,
+        setFiringTankId,
+        setDamagedPlayerId,
+        setTanks,
+        setLog,
+        tanks,
+        currentLevel,
+        sleep,
       });
-
-      flushSync(() => setFiringTankId(enemy.id + 100));
-      await sleep(300);
-
-      flushSync(() => setDamagedPlayerId(target.id));
-      setTanks((prev) =>
-        prev.map((t) =>
-          t.id === target.id
-            ? { ...t, hp: Math.max(t.hp - damage, 0) }
-            : t
-        )
-      );
-
-      setLog((prev) => [
-        `💣 ${enemy.name} hit Tank ${target.id} for ${damage} damage.`,
-        ...prev,
-      ]);
-
-      await sleep(500);
-      setFiringTankId(null);
-      setDamagedPlayerId(null);
-      await sleep(300);
     }
-
-    setEnemyTurnActive(false);
   };
 
-  const chooseTargetTank = () => {
-    const live = tanks.filter((t) => t.hp > 0);
-    if (live.length === 1) return live[0];
-    const [a, b] = live;
-    if (a.def !== b.def) return a.def < b.def ? a : b;
-    if (a.hp !== b.hp) return a.hp < b.hp ? a : b;
-    return a.id === 1 ? a : b;
-  };
+  useEffect(() => {
+    if (battleEnded) return;
+
+    if (liveEnemies.length === 0) {
+      setBattleEnded(true);
+      handleVictory({
+        enemyState,
+        setGold,
+        setTanks,
+        currentBattle,
+        setCurrentBattle,
+        currentLevel,
+        setCurrentLevel,
+        resetWeapons,
+        setCurrentScreen,
+      });
+    } else if (liveTanks.length === 0) {
+      setBattleEnded(true);
+      handleDefeat(setCurrentScreen);
+    }
+  }, [tanks, enemyState]);
 
   const weaponList = [
     { label: "Machine Gun", key: "machinegun", color: "bg-blue-600" },
