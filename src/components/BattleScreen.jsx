@@ -45,6 +45,19 @@ export default function BattleScreen() {
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
   useEffect(() => {
+  const e1 = enemyState.find(e => e.id === 1);
+  const e2 = enemyState.find(e => e.id === 2);
+
+  if (e1 && e1.hp > 0) {
+    setSelectedEnemyId(1);
+  } else if (e2 && e2.hp > 0) {
+    setSelectedEnemyId(2);
+  } else {
+    setSelectedEnemyId(null);
+  }
+}, [enemyState, currentTankIndex]);
+
+  useEffect(() => {
     if (currentTank.hp <= 0 && !enemyTurnActive && !battleEnded) {
       let nextTankIndex = (currentTankIndex + 1) % tanks.length;
       while (tanks[nextTankIndex].hp <= 0 && nextTankIndex !== currentTankIndex) {
@@ -294,6 +307,7 @@ export default function BattleScreen() {
       </p>
 
       <div className="mt-4 text-center">
+      <div className="mt-4 text-center">
         <p className="text-sm mb-2">Select Target</p>
         <div className="flex justify-center gap-3">
           {enemyState.map((e) => (
@@ -302,15 +316,18 @@ export default function BattleScreen() {
               onClick={() => setSelectedEnemyId(e.id)}
               disabled={e.hp <= 0}
               className={`px-4 py-1 text-sm rounded ${
-                selectedEnemyId === e.id
+                e.hp <= 0
+                  ? "bg-gray-800 text-gray-500 opacity-50 cursor-not-allowed"
+                  : selectedEnemyId === e.id
                   ? "bg-yellow-400 text-black font-bold"
-                  : "bg-gray-700 hover:bg-gray-600"
+                  : "bg-gray-700 hover:bg-gray-600 text-white"
               }`}
             >
               {e.name}
             </button>
           ))}
         </div>
+      </div>
       </div>
 
       <div className="mt-4 text-center">
@@ -361,5 +378,7 @@ export default function BattleScreen() {
     </div>
   );
 }
+
+
 
 
