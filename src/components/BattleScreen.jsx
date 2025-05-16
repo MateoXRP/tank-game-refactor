@@ -40,6 +40,17 @@ export default function BattleScreen() {
   } = useWeapons();
 
   const currentTank = tanks[currentTankIndex];
+useEffect(() => {
+  if (!currentTank || currentTank.hp <= 0) return;
+
+  const priority = ["airstrike", "missile", "cannon", "machinegun"];
+  for (const weapon of priority) {
+    if (isWeaponAvailable(currentTank, weapon)) {
+      setSelectedWeapon(weapon);
+      break;
+    }
+  }
+}, [currentTankIndex]);
   const liveTanks = tanks.filter((t) => t.hp > 0);
   const liveEnemies = enemyState.filter((e) => e.hp > 0);
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -378,6 +389,7 @@ export default function BattleScreen() {
     </div>
   );
 }
+
 
 
 
