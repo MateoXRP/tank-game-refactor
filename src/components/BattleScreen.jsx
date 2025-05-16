@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { useGame } from "../context/GameContext";
 import useWeapons from "../hooks/useWeapons";
+import useAutoSelectEnemy from "../hooks/useAutoSelectEnemy";
+import { handleVictory, handleDefeat } from "../helpers/VictoryDefeatHandler";
+
 import tankImg from "/tank1.png";
 import enemyImg from "/enemy.png";
+
 import BattleLog from "./BattleLog";
 import TankDisplay from "./TankDisplay";
-import useAutoSelectEnemy from "../hooks/useAutoSelectEnemy";
 import WeaponSelector from "./WeaponSelector";
 import TargetSelector from "./TargetSelector";
 import FireButton from "./FireButton";
-
 
 export default function BattleScreen() {
   const {
@@ -47,23 +49,22 @@ export default function BattleScreen() {
   } = useWeapons();
 
   const currentTank = tanks[currentTankIndex];
-
-  useEffect(() => {
-  if (!currentTank || currentTank.hp <= 0 || enemyTurnActive) return;
-
-  const priority = ["airstrike", "missile", "cannon", "machinegun"];
-  for (const weapon of priority) {
-    if (isWeaponAvailable(currentTank, weapon)) {
-      setSelectedWeapon(weapon);
-      break;
-    }
-  }
-}, [currentTankIndex, enemyTurnActive]);
   const liveTanks = tanks.filter((t) => t.hp > 0);
   const liveEnemies = enemyState.filter((e) => e.hp > 0);
   const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
   useAutoSelectEnemy(enemyState, currentTankIndex, enemyTurnActive, setSelectedEnemyId);
+
+  useEffect(() => {
+    if (!currentTank || currentTank.hp <= 0 || enemyTurnActive) return;
+    const priority = ["airstrike", "missile", "cannon", "machinegun"];
+    for (const weapon of priority) {
+      if (isWeaponAvailable(currentTank, weapon)) {
+        setSelectedWeapon(weapon);
+        break;
+      }
+    }
+  }, [currentTankIndex, enemyTurnActive]);
 
   useEffect(() => {
     if (currentTank.hp <= 0 && !enemyTurnActive && !battleEnded) {
@@ -74,6 +75,27 @@ export default function BattleScreen() {
       setCurrentTankIndex(nextTankIndex);
     }
   }, [currentTankIndex, currentTank.hp, enemyTurnActive, battleEnded]);
+
+  useEffect(() => {
+    if (battleEnded) return;
+    if (liveEnemies.length === 0) {
+      setBattleEnded(true);
+      handleVictoryDefeat.handleVictory({
+        enemyState,
+        setGold,
+        setTanks,
+        currentBattle,
+        setCurrentBattle,
+        currentLevel,
+        setCurrentLevel,
+        resetWeapons,
+        setCurrentScreen,
+      });
+    } else if (liveTanks.length === 0) {
+      setBattleEnded(true);
+      handleVictoryDefeat.handleDefeat(setCurrentScreen);
+    }
+  }, [tanks, enemyState]);
 
   const getDamage = (weapon) => {
     switch (weapon) {
@@ -135,7 +157,17 @@ export default function BattleScreen() {
     const allEnemiesDead = newEnemyState.every((e) => e.hp <= 0);
     if (allEnemiesDead) {
       setBattleEnded(true);
-      endBattleVictory();
+      handleVictoryDefeat.handleVictory({
+        enemyState,
+        setGold,
+        setTanks,
+        currentBattle,
+        setCurrentBattle,
+        currentLevel,
+        setCurrentLevel,
+        resetWeapons,
+        setCurrentScreen,
+      });
       return;
     }
 
@@ -145,54 +177,14 @@ export default function BattleScreen() {
     }
 
     setCurrentTankIndex(nextTankIndex);
-
     const isBackToStart = nextTankIndex === 0;
     if (isBackToStart || liveTanks.length === 1) {
       await doEnemyTurn(newEnemyState);
     }
   };
 
-  useEffect(() => {
-    if (battleEnded) return;
-
-    if (liveEnemies.length === 0) {
-      setBattleEnded(true);
-      endBattleVictory();
-    } else if (liveTanks.length === 0) {
-      setBattleEnded(true);
-      endBattleDefeat();
-    }
-  }, [tanks, enemyState]);
-
-  const endBattleVictory = () => {
-    const goldEarned = 20 * enemyState.length;
-    setGold((prev) => prev + goldEarned);
-
-    setTanks((prev) =>
-      prev.map((t) => ({
-        ...t,
-        hp: Math.min(t.hp + 25, t.maxHp),
-      }))
-    );
-
-    if (currentBattle < 5) {
-      setCurrentBattle(currentBattle + 1);
-    } else {
-      setCurrentLevel(currentLevel + 1);
-      setCurrentBattle(1);
-    }
-
-    resetWeapons();
-    setTimeout(() => setCurrentScreen("shop"), 1200);
-  };
-
-  const endBattleDefeat = () => {
-    setTimeout(() => setCurrentScreen("gameover"), 800);
-  };
-
   const doEnemyTurn = async (freshEnemyState) => {
     setEnemyTurnActive(true);
-
     const enemies = freshEnemyState.filter((e) => e.hp > 0);
 
     for (const enemy of enemies) {
@@ -255,55 +247,49 @@ export default function BattleScreen() {
       <p className="text-sm text-yellow-400 font-bold mt-1">💰 Gold: {gold}</p>
 
       <div className="flex justify-center gap-28 mt-4 max-w-[600px]">
-      <TankDisplay
-      entities={tanks}
-      type="player"
-      firingTankId={firingTankId}
-      damagedId={damagedPlayerId}
-      />
-      <TankDisplay
-      entities={enemyState}
-      type="enemy"
-      firingTankId={firingTankId}
-      damagedId={damagedEnemyId}
-  />
-</div>
+        <TankDisplay
+          entities={tanks}
+          type="player"
+          firingTankId={firingTankId}
+          damagedId={damagedPlayerId}
+        />
+        <TankDisplay
+          entities={enemyState}
+          type="enemy"
+          firingTankId={firingTankId}
+          damagedId={damagedEnemyId}
+        />
+      </div>
 
       <p className="mt-6 text-sm text-green-400 font-semibold">
         🎯 Current Turn: Tank {currentTank.id}
       </p>
 
-      <div className="mt-4 text-center">
       <TargetSelector
-  enemyState={enemyState}
-  selectedEnemyId={selectedEnemyId}
-  setSelectedEnemyId={setSelectedEnemyId}
-/>
-
-      </div>
+        enemyState={enemyState}
+        selectedEnemyId={selectedEnemyId}
+        setSelectedEnemyId={setSelectedEnemyId}
+      />
 
       <WeaponSelector
-  weaponList={weaponList}
-  currentTank={currentTank}
-  selectedWeapon={selectedWeapon}
-  setSelectedWeapon={setSelectedWeapon}
-  isWeaponAvailable={isWeaponAvailable}
-/>
-
+        weaponList={weaponList}
+        currentTank={currentTank}
+        selectedWeapon={selectedWeapon}
+        setSelectedWeapon={setSelectedWeapon}
+        isWeaponAvailable={isWeaponAvailable}
+      />
 
       <FireButton
-  handleFire={handleFire}
-  selectedWeapon={selectedWeapon}
-  enemyTurnActive={enemyTurnActive}
-  currentTank={currentTank}
-/>
-
+        handleFire={handleFire}
+        selectedWeapon={selectedWeapon}
+        enemyTurnActive={enemyTurnActive}
+        currentTank={currentTank}
+      />
 
       <div className="mt-3">
-  <BattleLog log={log} />
-</div>
-
-
+        <BattleLog log={log} />
+      </div>
     </div>
   );
 }
+
