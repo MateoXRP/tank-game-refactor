@@ -42,18 +42,17 @@ export default function BattleScreen() {
   const currentTank = tanks[currentTankIndex];
   const liveTanks = tanks.filter((t) => t.hp > 0);
   const liveEnemies = enemyState.filter((e) => e.hp > 0);
+  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
   useEffect(() => {
     if (currentTank.hp <= 0 && !enemyTurnActive && !battleEnded) {
-      const next = (currentTankIndex + 1) % tanks.length;
-      const nextTank = tanks[next];
-      if (nextTank && nextTank.hp > 0) {
-        setCurrentTankIndex(next);
+      let nextTankIndex = (currentTankIndex + 1) % tanks.length;
+      while (tanks[nextTankIndex].hp <= 0 && nextTankIndex !== currentTankIndex) {
+        nextTankIndex = (nextTankIndex + 1) % tanks.length;
       }
+      setCurrentTankIndex(nextTankIndex);
     }
   }, [currentTankIndex, currentTank.hp, enemyTurnActive, battleEnded]);
-
-  const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
   const getDamage = (weapon) => {
     switch (weapon) {
@@ -72,7 +71,6 @@ export default function BattleScreen() {
     markWeaponUsed(currentTank.id, selectedWeapon);
 
     const damage = getDamage(selectedWeapon);
-
     setFiringTankId(currentTank.id);
     await sleep(300);
 
@@ -108,7 +106,6 @@ export default function BattleScreen() {
     setLog((prev) => [...newLog, ...prev]);
 
     await sleep(400);
-
     setFiringTankId(null);
     setDamagedEnemyId(null);
     setSelectedWeapon(null);
@@ -121,10 +118,15 @@ export default function BattleScreen() {
       return;
     }
 
-    const nextTankIndex = (currentTankIndex + 1) % tanks.length;
+    let nextTankIndex = (currentTankIndex + 1) % tanks.length;
+    while (tanks[nextTankIndex].hp <= 0 && nextTankIndex !== currentTankIndex) {
+      nextTankIndex = (nextTankIndex + 1) % tanks.length;
+    }
+
     setCurrentTankIndex(nextTankIndex);
 
-    if (nextTankIndex === 0) {
+    const isBackToStart = nextTankIndex === 0;
+    if (isBackToStart || liveTanks.length === 1) {
       await doEnemyTurn(newEnemyState);
     }
   };
@@ -211,7 +213,7 @@ export default function BattleScreen() {
     const live = tanks.filter((t) => t.hp > 0);
     if (live.length === 1) return live[0];
     const [a, b] = live;
-    if (a.defense !== b.defense) return a.defense < b.defense ? a : b;
+    if (a.def !== b.def) return a.def < b.def ? a : b;
     if (a.hp !== b.hp) return a.hp < b.hp ? a : b;
     return a.id === 1 ? a : b;
   };
