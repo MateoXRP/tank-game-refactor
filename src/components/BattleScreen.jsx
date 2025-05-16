@@ -9,6 +9,7 @@ import TankDisplay from "./TankDisplay";
 import useAutoSelectEnemy from "../hooks/useAutoSelectEnemy";
 import WeaponSelector from "./WeaponSelector";
 import TargetSelector from "./TargetSelector";
+import FireButton from "./FireButton";
 
 
 export default function BattleScreen() {
@@ -290,21 +291,13 @@ export default function BattleScreen() {
 />
 
 
-      <div className="mt-4 text-center">
-        <button
-          onClick={handleFire}
-          disabled={
-            !selectedWeapon || enemyTurnActive || currentTank.hp <= 0
-          }
-          className={`px-5 py-2 rounded font-bold mt-2 ${
-            !selectedWeapon || enemyTurnActive || currentTank.hp <= 0
-              ? "bg-gray-600 text-gray-300 cursor-not-allowed"
-              : "bg-yellow-500 hover:bg-yellow-600 text-black"
-          }`}
-        >
-          🔥 Fire!
-        </button>
-      </div>
+      <FireButton
+  handleFire={handleFire}
+  selectedWeapon={selectedWeapon}
+  enemyTurnActive={enemyTurnActive}
+  currentTank={currentTank}
+/>
+
 
       <div className="mt-3">
   <BattleLog log={log} />
@@ -314,8 +307,3 @@ export default function BattleScreen() {
     </div>
   );
 }
-
-
-
-
-
