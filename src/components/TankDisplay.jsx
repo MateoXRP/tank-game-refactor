@@ -18,7 +18,7 @@ export default function TankDisplay({ entities = [], type, firingTankId, damaged
           <div className="text-sm text-center mt-1 w-28">
             <p>
               {type === "player"
-                ? `Tank ${entity.id} (Lvl ${entity.level ?? 1})`
+                ? `Tank ${entity.id} (L${entity.level ?? 1})`
                 : entity.name}
             </p>
             <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden my-1">
@@ -43,4 +43,3 @@ export default function TankDisplay({ entities = [], type, firingTankId, damaged
     </div>
   );
 }
-
