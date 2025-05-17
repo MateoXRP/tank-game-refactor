@@ -113,14 +113,43 @@ export default function BattleScreen() {
       const target = newEnemyState.find((e) => e.id === selectedEnemyId);
       if (!target) return;
 
+      const originalHp = target.hp;
+
       setDamagedEnemyId(target.id);
       await sleep(200);
 
+      const newHp = Math.max(target.hp - damage, 0);
+      const isKill = target.hp > 0 && newHp === 0;
+
       newEnemyState = newEnemyState.map((e) =>
-        e.id === target.id ? { ...e, hp: Math.max(e.hp - damage, 0) } : e
+        e.id === target.id ? { ...e, hp: newHp } : e
       );
 
       newLog.push(`💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`);
+
+      if (isKill) {
+        setTanks((prev) =>
+          prev.map((t) =>
+            t.id === currentTank.id
+              ? {
+                  ...t,
+                  exp: (t.exp || 0) + 1,
+                  ...(t.exp + 1 >= t.expToNext
+                    ? {
+                        level: t.level + 1,
+                        exp: 0,
+                        expToNext: t.expToNext * 2,
+                        hp: t.maxHp,
+                        atk: t.atk + 2,
+                        def: t.def + 2,
+                      }
+                    : {}),
+                }
+              : t
+          )
+        );
+        newLog.push(`⭐ Tank ${currentTank.id} earned 1 XP${currentTank.exp + 1 >= currentTank.expToNext ? " and LEVELED UP!" : "!"}`);
+      }
     }
 
     setEnemyState(newEnemyState);
