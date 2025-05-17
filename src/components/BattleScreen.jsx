@@ -113,13 +113,11 @@ export default function BattleScreen() {
       const target = newEnemyState.find((e) => e.id === selectedEnemyId);
       if (!target) return;
 
-      const originalHp = target.hp;
+      const newHp = Math.max(target.hp - damage, 0);
+      const isKill = target.hp > 0 && newHp === 0;
 
       setDamagedEnemyId(target.id);
       await sleep(200);
-
-      const newHp = Math.max(target.hp - damage, 0);
-      const isKill = target.hp > 0 && newHp === 0;
 
       newEnemyState = newEnemyState.map((e) =>
         e.id === target.id ? { ...e, hp: newHp } : e
@@ -129,26 +127,26 @@ export default function BattleScreen() {
 
       if (isKill) {
         setTanks((prev) =>
-          prev.map((t) =>
-            t.id === currentTank.id
-              ? {
-                  ...t,
-                  exp: (t.exp || 0) + 1,
-                  ...(t.exp + 1 >= t.expToNext
-                    ? {
-                        level: t.level + 1,
-                        exp: 0,
-                        expToNext: t.expToNext * 2,
-                        hp: t.maxHp,
-                        atk: t.atk + 2,
-                        def: t.def + 2,
-                      }
-                    : {}),
-                }
-              : t
-          )
+          prev.map((t) => {
+            if (t.id !== currentTank.id) return t;
+            const gainedExp = t.exp + 1;
+            const shouldLevelUp = gainedExp >= t.expToNext;
+            return {
+              ...t,
+              exp: shouldLevelUp ? 0 : gainedExp,
+              level: shouldLevelUp ? t.level + 1 : t.level,
+              expToNext: shouldLevelUp ? t.expToNext * 2 : t.expToNext,
+              hp: shouldLevelUp ? t.maxHp : t.hp,
+              atk: shouldLevelUp ? t.atk + 2 : t.atk,
+              def: shouldLevelUp ? t.def + 2 : t.def,
+            };
+          })
         );
-        newLog.push(`⭐ Tank ${currentTank.id} earned 1 XP${currentTank.exp + 1 >= currentTank.expToNext ? " and LEVELED UP!" : "!"}`);
+        newLog.push(
+          `⭐ Tank ${currentTank.id} earned 1 XP${
+            currentTank.exp + 1 >= currentTank.expToNext ? " and LEVELED UP!" : "!"
+          }`
+        );
       }
     }
 
@@ -182,8 +180,8 @@ export default function BattleScreen() {
     while (tanks[nextTankIndex].hp <= 0 && nextTankIndex !== currentTankIndex) {
       nextTankIndex = (nextTankIndex + 1) % tanks.length;
     }
-
     setCurrentTankIndex(nextTankIndex);
+
     const isBackToStart = nextTankIndex === 0;
     if (isBackToStart || liveTanks.length === 1) {
       await doEnemyTurn({
