@@ -1,47 +1,55 @@
-// src/helpers/generateEnemies.js
+// helpers/generateEnemies.js
 
 export default function generateEnemies(level) {
-  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const getEnemyStats = (type) => {
+    const baseStats = {
+      grunt: { hp: 60, atk: 10, def: 5 },
+      brute: { hp: 100, atk: 20, def: 10 },
+    };
 
-  // Define enemy types
-  const enemyTypes = {
-    weak: {
-      name: "Grunt",
-      baseHp: 50,
-    },
-    medium: {
-      name: "Bruiser",
-      baseHp: 80,
-    },
+    const stats = baseStats[type];
+    const scale = level >= 6 ? 1 + (level - 5) * 0.15 : 1; // Scaling after level 5
+
+    return {
+      hp: Math.round(stats.hp * scale),
+      maxHp: Math.round(stats.hp * scale),
+      atk: Math.round(stats.atk * scale),
+      def: Math.round(stats.def * scale),
+      type,
+    };
   };
 
-  // Weighted formation selection that favors stronger enemies as level increases
-  const formationPool = [];
+  const generateBruteOnlyFormation = () => {
+    const formations = [
+      [getEnemyStats("brute")],
+      [getEnemyStats("brute"), getEnemyStats("brute")],
+    ];
+    return formations[Math.random() < 0.4 ? 0 : 1];
+  };
 
-  if (level <= 2) {
-    formationPool.push(["weak"]);
-    formationPool.push(["weak", "weak"]);
-  } else if (level <= 4) {
-    formationPool.push(["weak", "medium"]);
-    formationPool.push(["medium"]);
-    formationPool.push(["weak", "weak"]);
-  } else {
-    formationPool.push(["medium"]);
-    formationPool.push(["weak", "medium"]);
-    formationPool.push(["medium", "medium"]);
-  }
+  const generateMixedFormation = () => {
+    const formations = [
+      [getEnemyStats("grunt")],
+      [getEnemyStats("grunt"), getEnemyStats("grunt")],
+      [getEnemyStats("brute")],
+      [getEnemyStats("grunt"), getEnemyStats("brute")],
+    ];
+    const weights = [0.4, 0.3, 0.15, 0.15];
+    const rand = Math.random();
+    let sum = 0;
+    for (let i = 0; i < formations.length; i++) {
+      sum += weights[i];
+      if (rand < sum) return formations[i];
+    }
+    return formations[0];
+  };
 
-  const formation = formationPool[Math.floor(Math.random() * formationPool.length)];
+  const enemies = level >= 6 ? generateBruteOnlyFormation() : generateMixedFormation();
 
-  return formation.map((typeKey, index) => {
-    const type = enemyTypes[typeKey];
-    const hp = type.baseHp + rand(0, level * 2); // Scale HP with level
-    return {
-      id: index + 1,
-      name: type.name,
-      hp,
-      maxHp: hp,
-    };
-  });
+  return enemies.map((enemy, index) => ({
+    id: index + 1,
+    name: `${enemy.type === "grunt" ? "Grunt" : "Brute"} ${index + 1}`,
+    ...enemy,
+  }));
 }
 
