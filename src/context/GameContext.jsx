@@ -18,14 +18,14 @@ export const GameProvider = ({ children }) => {
     upgrades: { atk: 0, def: 0 },
   });
 
-  const [tanks, setTanks] = useState([createInitialTank(1), createInitialTank(2)]);
-  const [gold, setGold] = useState(40); // Reduced from 60
+  const getDefaultTanks = () => [createInitialTank(1), createInitialTank(2)];
+
+  const [tanks, setTanks] = useState(getDefaultTanks());
+  const [gold, setGold] = useState(40); // reduced from 60
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentBattle, setCurrentBattle] = useState(1);
 
-  const hasUpgrade = (tank, stat) => {
-    return tank.upgrades?.[stat] || 0;
-  };
+  const hasUpgrade = (tank, stat) => tank.upgrades?.[stat] || 0;
 
   const buyUpgrade = (tankId, stat) => {
     const cost = 20;
@@ -58,18 +58,15 @@ export const GameProvider = ({ children }) => {
     setTanks((prev) =>
       prev.map((t) =>
         t.id === tankId
-          ? {
-              ...t,
-              hp: Math.min(t.hp + 25, t.maxHp),
-            }
+          ? { ...t, hp: Math.min(t.hp + 25, t.maxHp) }
           : t
       )
     );
   };
 
   const resetGame = () => {
-    setTanks([createInitialTank(1), createInitialTank(2)]);
-    setGold(40); // Match reduced starting gold
+    setTanks(getDefaultTanks());
+    setGold(40);
     setCurrentLevel(1);
     setCurrentBattle(1);
   };
@@ -93,6 +90,7 @@ export const GameProvider = ({ children }) => {
         buyUpgrade,
         repairTank,
         resetGame,
+        getDefaultTanks,
       }}
     >
       {children}

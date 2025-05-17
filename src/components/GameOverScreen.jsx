@@ -11,6 +11,7 @@ export default function GameOverScreen() {
 
   const handleSignOut = () => {
     Cookies.remove("tankPlayer");
+    resetGame(); // <-- Ensures true reset even on sign-in
     setPlayerName("");
     setCurrentScreen("login");
   };
