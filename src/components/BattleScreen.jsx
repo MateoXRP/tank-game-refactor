@@ -1,3 +1,4 @@
+// BattleScreen.jsx
 import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { useGame } from "../context/GameContext";
@@ -6,9 +7,6 @@ import useAutoSelectEnemy from "../hooks/useAutoSelectEnemy";
 import { handleVictory, handleDefeat } from "../helpers/VictoryDefeatHandler";
 import doEnemyTurn from "../helpers/doEnemyTurn";
 import generateEnemies from "../helpers/generateEnemies";
-
-import tankImg from "/tank1.png";
-import enemyImg from "/enemy.png";
 
 import BattleLog from "./BattleLog";
 import TankDisplay from "./TankDisplay";
@@ -125,12 +123,11 @@ export default function BattleScreen() {
         `💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`
       );
 
-      // Leveling logic
+      // Level up logic
       if (isKill) {
         setTanks((prev) =>
           prev.map((tank) => {
             if (tank.id !== currentTank.id) return tank;
-
             const newExp = tank.exp + 1;
             const needsLevelUp = newExp >= tank.expToNext;
             return needsLevelUp
@@ -143,8 +140,13 @@ export default function BattleScreen() {
                   maxHp: tank.maxHp + 10,
                   atk: tank.atk + 2,
                   def: tank.def + 2,
+                  kills: (tank.kills || 0) + 1,
                 }
-              : { ...tank, exp: newExp };
+              : {
+                  ...tank,
+                  exp: newExp,
+                  kills: (tank.kills || 0) + 1,
+                };
           })
         );
       }

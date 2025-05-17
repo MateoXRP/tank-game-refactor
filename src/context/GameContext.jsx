@@ -16,6 +16,7 @@ export const GameProvider = ({ children }) => {
     exp: 0,
     expToNext: 2,
     upgrades: { atk: 0, def: 0 },
+    kils: 0,
   });
 
   const getDefaultTanks = () => [createInitialTank(1), createInitialTank(2)];

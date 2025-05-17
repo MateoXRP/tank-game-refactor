@@ -5,6 +5,7 @@ import {
   collection,
   doc,
   setDoc,
+  getDoc,
   query,
   orderBy,
   limit,
@@ -27,11 +28,34 @@ export const db = getFirestore(app);
 // Submit a new score to the specified leaderboard
 export async function submitGlobalScore(boardName, { name, level, battle, kills }) {
   try {
-    await setDoc(doc(db, boardName, name), {
+    const docRef = doc(db, boardName, name);
+    const docSnap = await getDoc(docRef);
+
+    let finalLevel = level;
+    let finalBattle = battle;
+    let finalKills = kills;
+
+    if (docSnap.exists()) {
+      const existing = docSnap.data();
+
+      // 🧮 Accumulate kills
+      finalKills = (existing.kills || 0) + kills;
+
+      // 🧩 Compare level/battle to keep the furthest point
+      if (
+        existing.level > level ||
+        (existing.level === level && existing.battle > battle)
+      ) {
+        finalLevel = existing.level;
+        finalBattle = existing.battle;
+      }
+    }
+
+    await setDoc(docRef, {
       name,
-      level,
-      battle,
-      kills,
+      level: finalLevel,
+      battle: finalBattle,
+      kills: finalKills,
       timestamp: serverTimestamp(),
     });
   } catch (err) {
