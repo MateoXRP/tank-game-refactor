@@ -1,5 +1,3 @@
-// /helpers/VictoryDefeatHandler.js
-
 export function handleVictory({
   enemyState,
   setGold,
@@ -11,13 +9,13 @@ export function handleVictory({
   resetWeapons,
   setCurrentScreen,
 }) {
-  const goldEarned = 20 * enemyState.length;
+  const goldEarned = Math.floor((20 * enemyState.length) * 0.5); // 50% reduced gold
   setGold((prev) => prev + goldEarned);
 
   setTanks((prev) =>
     prev.map((t) => ({
       ...t,
-      hp: Math.min(t.hp + 25, t.maxHp),
+      hp: Math.min(t.hp + 12, t.maxHp), // 💉 Reduced healing from 25 → 12
     }))
   );
 

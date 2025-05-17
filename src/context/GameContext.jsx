@@ -19,7 +19,7 @@ export const GameProvider = ({ children }) => {
   });
 
   const [tanks, setTanks] = useState([createInitialTank(1), createInitialTank(2)]);
-  const [gold, setGold] = useState(60);
+  const [gold, setGold] = useState(40); // Reduced from 60
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentBattle, setCurrentBattle] = useState(1);
 
@@ -69,7 +69,7 @@ export const GameProvider = ({ children }) => {
 
   const resetGame = () => {
     setTanks([createInitialTank(1), createInitialTank(2)]);
-    setGold(60);
+    setGold(40); // Match reduced starting gold
     setCurrentLevel(1);
     setCurrentBattle(1);
   };
