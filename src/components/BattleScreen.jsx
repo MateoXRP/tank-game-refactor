@@ -5,6 +5,7 @@ import useWeapons from "../hooks/useWeapons";
 import useAutoSelectEnemy from "../hooks/useAutoSelectEnemy";
 import { handleVictory, handleDefeat } from "../helpers/VictoryDefeatHandler";
 import doEnemyTurn from "../helpers/doEnemyTurn";
+import generateEnemies from "../helpers/generateEnemies";
 
 import tankImg from "/tank1.png";
 import enemyImg from "/enemy.png";
@@ -30,10 +31,7 @@ export default function BattleScreen() {
 
   const [selectedEnemyId, setSelectedEnemyId] = useState(null);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
-  const [enemyState, setEnemyState] = useState([
-    { id: 1, name: "Enemy 1", hp: 60, maxHp: 60 },
-    { id: 2, name: "Enemy 2", hp: 80, maxHp: 80 },
-  ]);
+  const [enemyState, setEnemyState] = useState(generateEnemies(currentLevel));
   const [log, setLog] = useState([]);
   const [firingTankId, setFiringTankId] = useState(null);
   const [damagedEnemyId, setDamagedEnemyId] = useState(null);
@@ -113,39 +111,41 @@ export default function BattleScreen() {
       const target = newEnemyState.find((e) => e.id === selectedEnemyId);
       if (!target) return;
 
-      const newHp = Math.max(target.hp - damage, 0);
-      const isKill = target.hp > 0 && newHp === 0;
-
       setDamagedEnemyId(target.id);
       await sleep(200);
+
+      const newHp = Math.max(target.hp - damage, 0);
+      const isKill = newHp === 0;
 
       newEnemyState = newEnemyState.map((e) =>
         e.id === target.id ? { ...e, hp: newHp } : e
       );
 
-      newLog.push(`💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`);
+      newLog.push(
+        `💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`
+      );
 
+      // Leveling logic
       if (isKill) {
         setTanks((prev) =>
-          prev.map((t) => {
-            if (t.id !== currentTank.id) return t;
-            const gainedExp = t.exp + 1;
-            const shouldLevelUp = gainedExp >= t.expToNext;
-            return {
-              ...t,
-              exp: shouldLevelUp ? 0 : gainedExp,
-              level: shouldLevelUp ? t.level + 1 : t.level,
-              expToNext: shouldLevelUp ? t.expToNext * 2 : t.expToNext,
-              hp: shouldLevelUp ? t.maxHp : t.hp,
-              atk: shouldLevelUp ? t.atk + 2 : t.atk,
-              def: shouldLevelUp ? t.def + 2 : t.def,
-            };
+          prev.map((tank) => {
+            if (tank.id !== currentTank.id) return tank;
+
+            const newExp = tank.exp + 1;
+            const needsLevelUp = newExp >= tank.expToNext;
+            return needsLevelUp
+              ? {
+                  ...tank,
+                  exp: 0,
+                  expToNext: tank.expToNext * 2,
+                  level: tank.level + 1,
+                  hp: tank.hp + 10,
+                  maxHp: tank.maxHp + 10,
+                  atk: tank.atk + 2,
+                  def: tank.def + 2,
+                }
+              : { ...tank, exp: newExp };
           })
-        );
-        newLog.push(
-          `⭐ Tank ${currentTank.id} earned 1 XP${
-            currentTank.exp + 1 >= currentTank.expToNext ? " and LEVELED UP!" : "!"
-          }`
         );
       }
     }
@@ -163,7 +163,7 @@ export default function BattleScreen() {
     if (allEnemiesDead) {
       setBattleEnded(true);
       handleVictory({
-        enemyState,
+        enemyState: newEnemyState,
         setGold,
         setTanks,
         currentBattle,
@@ -180,6 +180,7 @@ export default function BattleScreen() {
     while (tanks[nextTankIndex].hp <= 0 && nextTankIndex !== currentTankIndex) {
       nextTankIndex = (nextTankIndex + 1) % tanks.length;
     }
+
     setCurrentTankIndex(nextTankIndex);
 
     const isBackToStart = nextTankIndex === 0;
