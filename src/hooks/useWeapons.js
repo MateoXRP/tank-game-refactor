@@ -21,7 +21,7 @@ export default function useWeapons() {
     const id = tank.id;
 
     if (weaponKey === "cannon") {
-      console.log("🔧 Checking cannon cooldown for Tank", id, "=", cannonCooldown[id]);
+//      console.log("🔧 Checking cannon cooldown for Tank", id, "=", cannonCooldown[id]);
     }
 
     switch (weaponKey) {
@@ -44,7 +44,7 @@ export default function useWeapons() {
     } else if (weaponKey === "airstrike") {
       setAirstrikeUsed((prev) => ({ ...prev, [tankId]: true }));
     } else if (weaponKey === "cannon") {
-      console.log("💥 Setting cannon cooldown for Tank", tankId);
+//      console.log("💥 Setting cannon cooldown for Tank", tankId);
       setCannonCooldown((prev) => ({ ...prev, [tankId]: 1 }));
     }
   };
@@ -55,7 +55,7 @@ export default function useWeapons() {
         ...prev,
         [tankId]: Math.max(0, (prev[tankId] || 0) - 1),
       };
-      console.log("🔁 Advancing cooldowns:", updated);
+//      console.log("🔁 Advancing cooldowns:", updated);
       return updated;
     });
   };

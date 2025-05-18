@@ -1,78 +1,83 @@
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
-import { submitGlobalScore, fetchGlobalLeaderboard } from "../firebase";
 import { useGame } from "../context/GameContext";
+import { submitGlobalScore, fetchGlobalLeaderboard } from "../firebase";
 
 export default function GameOverScreen() {
   const {
-    setCurrentScreen,
-    tanks,
+    playerName,
     currentLevel,
     currentBattle,
-    resetGameState,
+    setCurrentScreen,
+    tanks,
   } = useGame();
 
   const [leaderboard, setLeaderboard] = useState([]);
 
-  useEffect(() => {
-    const name = Cookies.get("tankPlayer");
-    if (name) {
-      const totalKills = tanks.reduce((sum, t) => sum + (t.kills || 0), 0);
-      submitGlobalScore("tank_leaderboard", {
-        name,
-        level: currentLevel,
-        battle: currentBattle,
-        kills: totalKills,
-        timestamp: Date.now(),
-      });
-    }
-    fetchGlobalLeaderboard("tank_leaderboard").then(setLeaderboard);
-  }, []);
-
-  const restart = () => {
-    resetGameState();
-    setCurrentScreen("shop");
+  const handleRestart = () => {
+    window.location.reload(); // clears state, refreshes game
   };
 
-  const signout = () => {
+  const handleSignOut = () => {
     Cookies.remove("tankPlayer");
-    setCurrentScreen("login");
+    window.location.reload(); // clears state and cookies, goes back to login
   };
+
+  useEffect(() => {
+    const totalKills = tanks.reduce((sum, t) => sum + (t.kills || 0), 0);
+
+    submitGlobalScore("tank_leaderboard", {
+      name: playerName,
+      level: currentLevel,
+      battle: currentBattle,
+      kills: totalKills,
+    });
+
+    fetchGlobalLeaderboard("tank_leaderboard").then(setLeaderboard);
+  }, [playerName, currentLevel, currentBattle, tanks]);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center font-mono p-4">
-      <h1 className="text-4xl text-red-500 font-bold mb-4">💀 Game Over</h1>
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 font-mono">
+      <h1 className="text-3xl text-red-500 font-bold mb-4">💀 Game Over</h1>
+      <p className="mb-2 text-center">
+        {playerName}, you made it to <br />
+        <span className="font-bold text-yellow-300">
+          Level {currentLevel}, Battle {currentBattle}
+        </span>{" "}
+        with total kills.
+      </p>
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-4 mt-4">
         <button
-          onClick={restart}
-          className="px-6 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded"
+          onClick={handleRestart}
+          className="bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-300 font-semibold"
         >
           🔁 Restart
         </button>
         <button
-          onClick={signout}
-          className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded"
+          onClick={handleSignOut}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-400 font-semibold"
         >
           🚪 Sign Out
         </button>
       </div>
 
-      <div className="bg-gray-800 p-4 rounded max-w-md w-full">
-        <h2 className="text-xl font-bold mb-2 text-center text-yellow-300">
-          🏆 Leaderboard
-        </h2>
-        <ul className="text-sm space-y-1">
-          {leaderboard.map((entry, idx) => (
-            <li key={idx} className="flex justify-between">
-              <span>
-                {entry.name} – L{entry.level} B{entry.battle}
-              </span>
-              <span>🎯 {entry.kills} Kills</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <h2 className="text-xl mt-8 mb-2">🏆 Leaderboard</h2>
+      <ul className="text-sm w-full max-w-xs space-y-1">
+        {leaderboard.map((entry, index) => (
+          <li
+            key={index}
+            className="bg-gray-800 rounded px-3 py-1 flex justify-between items-center"
+          >
+            <span className="font-bold">
+              {index + 1}. {entry.name}
+            </span>
+            <span className="text-right text-yellow-300">
+              L{entry.level}-B{entry.battle} | 🪖 {entry.kills}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
