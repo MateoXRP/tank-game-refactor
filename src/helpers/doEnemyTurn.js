@@ -1,3 +1,4 @@
+// doEnemyTurn.js
 import { flushSync } from "react-dom";
 
 export default async function doEnemyTurn({
@@ -17,30 +18,28 @@ export default async function doEnemyTurn({
 
   for (const enemy of enemies) {
     const target = chooseTargetTank(tanks);
-    const damage = Math.floor(Math.random() * 5 + 5 + currentLevel);
+    const baseDamage = Math.floor(Math.random() * 5 + 5 + currentLevel);
+    const reduced = Math.max(0, baseDamage + (enemy.atk || 0) * 0.5 - (target.def || 0) * 0.3);
 
-    // Reset animation state first
     flushSync(() => {
       setFiringTankId(null);
       setDamagedPlayerId(null);
     });
 
-    // Trigger enemy fire animation
     flushSync(() => setFiringTankId(enemy.id + 100));
     await sleep(300);
 
-    // Trigger player damage animation
     flushSync(() => setDamagedPlayerId(target.id));
     setTanks((prev) =>
       prev.map((t) =>
         t.id === target.id
-          ? { ...t, hp: Math.max(t.hp - damage, 0) }
+          ? { ...t, hp: Math.max(t.hp - Math.round(reduced), 0) }
           : t
       )
     );
 
     setLog((prev) => [
-      `💣 ${enemy.name} hit Tank ${target.id} for ${damage} damage.`,
+      `💣 ${enemy.name} hit Tank ${target.id} for ${Math.round(reduced)} damage.`,
       ...prev,
     ]);
 
@@ -53,7 +52,6 @@ export default async function doEnemyTurn({
   setEnemyTurnActive(false);
 }
 
-// Utility function to choose target
 function chooseTargetTank(tanks) {
   const live = tanks.filter((t) => t.hp > 0);
   if (live.length === 1) return live[0];

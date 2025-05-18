@@ -89,7 +89,7 @@ export default function BattleScreen() {
     advanceCooldownFor(currentTank.id);
     markWeaponUsed(currentTank.id, selectedWeapon);
 
-    const damage = getDamage(selectedWeapon);
+    const base = getDamage(selectedWeapon);
     setFiringTankId(currentTank.id);
     await sleep(300);
 
@@ -99,6 +99,7 @@ export default function BattleScreen() {
     if (selectedWeapon === "airstrike") {
       newEnemyState = newEnemyState.map((enemy) => {
         if (enemy.hp <= 0) return enemy;
+        const damage = Math.max(0, Math.round(base + currentTank.atk * 0.5 - enemy.def * 0.3));
         const newHp = Math.max(enemy.hp - damage, 0);
         if (newHp < enemy.hp) {
           newLog.push(`💥 Tank ${currentTank.id} airstruck ${enemy.name} for ${damage}.`);
@@ -112,6 +113,7 @@ export default function BattleScreen() {
       setDamagedEnemyId(target.id);
       await sleep(200);
 
+      const damage = Math.max(0, Math.round(base + currentTank.atk * 0.5 - target.def * 0.3));
       const newHp = Math.max(target.hp - damage, 0);
       const isKill = newHp === 0;
 
@@ -123,7 +125,6 @@ export default function BattleScreen() {
         `💥 Tank ${currentTank.id} hit ${target.name} with ${selectedWeapon} for ${damage}.`
       );
 
-      // Level up logic
       if (isKill) {
         setTanks((prev) =>
           prev.map((tank) => {
