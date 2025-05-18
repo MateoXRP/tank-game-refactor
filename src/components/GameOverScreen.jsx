@@ -13,6 +13,7 @@ export default function GameOverScreen() {
   } = useGame();
 
   const [leaderboard, setLeaderboard] = useState([]);
+  const totalKills = tanks.reduce((sum, t) => sum + (t.kills || 0), 0); // FIXED
 
   const handleRestart = () => {
     window.location.reload(); // clears state, refreshes game
@@ -24,17 +25,20 @@ export default function GameOverScreen() {
   };
 
   useEffect(() => {
-    const totalKills = tanks.reduce((sum, t) => sum + (t.kills || 0), 0);
+    async function updateLeaderboard() {
+      await submitGlobalScore("tank_leaderboard", {
+        name: playerName,
+        level: currentLevel,
+        battle: currentBattle,
+        kills: totalKills,
+      });
 
-    submitGlobalScore("tank_leaderboard", {
-      name: playerName,
-      level: currentLevel,
-      battle: currentBattle,
-      kills: totalKills,
-    });
+      const data = await fetchGlobalLeaderboard("tank_leaderboard");
+      setLeaderboard(data);
+    }
 
-    fetchGlobalLeaderboard("tank_leaderboard").then(setLeaderboard);
-  }, [playerName, currentLevel, currentBattle, tanks]);
+    updateLeaderboard();
+  }, [playerName, currentLevel, currentBattle, tanks, totalKills]);
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 font-mono">
@@ -44,7 +48,7 @@ export default function GameOverScreen() {
         <span className="font-bold text-yellow-300">
           Level {currentLevel}, Battle {currentBattle}
         </span>{" "}
-        with total kills.
+        with <span className="text-green-400 font-bold">{totalKills}</span> kills.
       </p>
 
       <div className="flex gap-4 mt-4">
