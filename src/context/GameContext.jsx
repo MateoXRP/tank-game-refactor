@@ -22,7 +22,7 @@ export const GameProvider = ({ children }) => {
   const getDefaultTanks = () => [createInitialTank(1), createInitialTank(2)];
 
   const [tanks, setTanks] = useState(getDefaultTanks());
-  const [gold, setGold] = useState(40); // reduced from 60
+  const [gold, setGold] = useState(20); // reduced from 40
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentBattle, setCurrentBattle] = useState(1);
 

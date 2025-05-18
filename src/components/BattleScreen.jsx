@@ -29,7 +29,7 @@ export default function BattleScreen() {
 
   const [selectedEnemyId, setSelectedEnemyId] = useState(null);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
-  const [enemyState, setEnemyState] = useState(generateEnemies(currentLevel));
+  const [enemyState, setEnemyState] = useState(generateEnemies(currentLevel, currentBattle)); // 🔁 updated here
   const [log, setLog] = useState([]);
   const [firingTankId, setFiringTankId] = useState(null);
   const [damagedEnemyId, setDamagedEnemyId] = useState(null);

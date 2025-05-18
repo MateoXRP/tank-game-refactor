@@ -1,6 +1,6 @@
 // helpers/generateEnemies.js
 
-export default function generateEnemies(level) {
+export default function generateEnemies(level, battle = 1) {
   const getEnemyStats = (type) => {
     const baseStats = {
       grunt: { hp: 60, atk: 10, def: 5 },
@@ -8,7 +8,11 @@ export default function generateEnemies(level) {
     };
 
     const stats = baseStats[type];
-    const scale = level >= 6 ? 1 + (level - 5) * 0.15 : 1; // Scaling after level 5
+
+    // 📈 Scaling begins at Level 1, Battle 1 (+5% per battle)
+    const baseLevel = 0; // Level 1 is index 1
+    const encounterIndex = (level - baseLevel - 1) * 5 + (battle - 1);
+    const scale = 1 + encounterIndex * 0.05;
 
     return {
       hp: Math.round(stats.hp * scale),
