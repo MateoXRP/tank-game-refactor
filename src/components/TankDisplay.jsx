@@ -34,7 +34,7 @@ export default function TankDisplay({ entities = [], type, firingTankId, damaged
             </p>
             {type === "player" && (
               <p className="text-xs text-yellow-300">
-                ATK: {entity.atk} | DEF: {entity.def} | EXP: {entity.exp}/{entity.expToNext}
+                🔫:{entity.atk} 🛡️:{entity.def} 🎖️:{entity.exp}/{entity.expToNext}
               </p>
             )}
           </div>
