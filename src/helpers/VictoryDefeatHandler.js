@@ -1,3 +1,5 @@
+// VictoryDefeatHandler.js
+
 export function handleVictory({
   enemyState,
   setGold,
@@ -9,7 +11,7 @@ export function handleVictory({
   resetWeapons,
   setCurrentScreen,
 }) {
-  const goldEarned = Math.floor((20 * enemyState.length) * 0.5); // 50% reduced gold
+  const goldEarned = 20 * enemyState.length; // Restored full gold per tank
   setGold((prev) => prev + goldEarned);
 
   setTanks((prev) =>
