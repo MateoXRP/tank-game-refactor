@@ -29,7 +29,7 @@ export default function BattleScreen() {
 
   const [selectedEnemyId, setSelectedEnemyId] = useState(null);
   const [selectedWeapon, setSelectedWeapon] = useState(null);
-  const [enemyState, setEnemyState] = useState(generateEnemies(currentLevel, currentBattle)); // 🔁 updated here
+  const [enemyState, setEnemyState] = useState(generateEnemies(currentLevel, currentBattle));
   const [log, setLog] = useState([]);
   const [firingTankId, setFiringTankId] = useState(null);
   const [damagedEnemyId, setDamagedEnemyId] = useState(null);
@@ -90,13 +90,22 @@ export default function BattleScreen() {
     markWeaponUsed(currentTank.id, selectedWeapon);
 
     const base = getDamage(selectedWeapon);
-    setFiringTankId(currentTank.id);
-    await sleep(300);
 
     let newEnemyState = [...enemyState];
     let newLog = [];
 
     if (selectedWeapon === "airstrike") {
+      // No firing animation for airstrike
+      await sleep(200);
+
+      // Show damage animation on all enemies simultaneously
+      const hitEnemyIds = newEnemyState
+        .filter((enemy) => enemy.hp > 0)
+        .map((enemy) => enemy.id);
+
+      flushSync(() => setDamagedEnemyId(-1)); // Signal all enemies
+      await sleep(200);
+
       newEnemyState = newEnemyState.map((enemy) => {
         if (enemy.hp <= 0) return enemy;
         const damage = Math.max(0, Math.round(base + currentTank.atk * 0.5 - enemy.def * 0.3));
@@ -106,7 +115,13 @@ export default function BattleScreen() {
         }
         return { ...enemy, hp: newHp };
       });
+
+      await sleep(300);
+      setDamagedEnemyId(null);
     } else {
+      setFiringTankId(currentTank.id);
+      await sleep(300);
+
       const target = newEnemyState.find((e) => e.id === selectedEnemyId);
       if (!target) return;
 
@@ -151,14 +166,14 @@ export default function BattleScreen() {
           })
         );
       }
+
+      await sleep(300);
+      setFiringTankId(null);
+      setDamagedEnemyId(null);
     }
 
     setEnemyState(newEnemyState);
     setLog((prev) => [...newLog, ...prev]);
-
-    await sleep(400);
-    setFiringTankId(null);
-    setDamagedEnemyId(null);
     setSelectedWeapon(null);
     setSelectedEnemyId(null);
 
