@@ -9,10 +9,10 @@ export default function generateEnemies(level, battle = 1) {
 
     const stats = baseStats[type];
 
-    // 📈 Scaling begins at Level 1, Battle 1 (+5% per battle)
+    // 📈 Scaling begins at Level 1, Battle 1 (+2.5% per battle)
     const baseLevel = 0; // Level 1 is index 1
     const encounterIndex = (level - baseLevel - 1) * 5 + (battle - 1);
-    const scale = 1 + encounterIndex * 0.05;
+    const scale = 1 + encounterIndex * 0.025;
 
     return {
       hp: Math.round(stats.hp * scale),
