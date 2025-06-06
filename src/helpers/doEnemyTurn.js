@@ -17,11 +17,9 @@ export default async function doEnemyTurn({
   const enemies = freshEnemyState.filter((e) => e.hp > 0);
 
   for (const enemy of enemies) {
-    // Skip enemy turn if they are already defeated
     if (enemy.hp <= 0) continue;
 
     const target = chooseTargetTank(tanks);
-
     const baseDamage = Math.floor(Math.random() * 5 + 5 + currentLevel);
     const reduced = Math.max(0, baseDamage + (enemy.atk || 0) * 0.5 - (target.def || 0) * 0.3);
     const finalDamage = Math.round(reduced);
@@ -34,10 +32,12 @@ export default async function doEnemyTurn({
 
     // 🎯 Trigger enemy firing animation
     flushSync(() => setFiringTankId(enemy.id + 100));
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
     await sleep(300);
 
     // 💥 Trigger player damage animation
     flushSync(() => setDamagedPlayerId(target.id));
+    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
     await sleep(200);
 
     // 🩸 Apply damage
@@ -55,7 +55,6 @@ export default async function doEnemyTurn({
       ...prev,
     ]);
 
-    // ⏳ Pause after damage animation
     await sleep(500);
 
     // 🧼 Clear animation state again before next enemy
@@ -70,7 +69,6 @@ export default async function doEnemyTurn({
   setEnemyTurnActive(false);
 }
 
-// Utility function to choose which player tank to target
 function chooseTargetTank(tanks) {
   const live = tanks.filter((t) => t.hp > 0);
   if (live.length === 1) return live[0];
