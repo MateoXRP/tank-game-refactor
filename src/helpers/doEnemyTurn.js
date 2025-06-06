@@ -24,20 +24,21 @@ export default async function doEnemyTurn({
     const reduced = Math.max(0, baseDamage + (enemy.atk || 0) * 0.5 - (target.def || 0) * 0.3);
     const finalDamage = Math.round(reduced);
 
-    // 🧹 Clear prior animation states
+    // 🧹 Clear previous states
     flushSync(() => {
       setFiringTankId(null);
       setDamagedPlayerId(null);
     });
+    await new Promise((r) => requestAnimationFrame(r));
 
-    // 🎯 Trigger enemy firing animation
+    // 🎯 Fire animation
     flushSync(() => setFiringTankId(enemy.id + 100));
-    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise((r) => requestAnimationFrame(r));
     await sleep(300);
 
-    // 💥 Trigger player damage animation
+    // 💥 Damage animation
     flushSync(() => setDamagedPlayerId(target.id));
-    await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    await new Promise((r) => requestAnimationFrame(r));
     await sleep(200);
 
     // 🩸 Apply damage
@@ -57,12 +58,12 @@ export default async function doEnemyTurn({
 
     await sleep(500);
 
-    // 🧼 Clear animation state again before next enemy
+    // 🧼 Cleanup
     flushSync(() => {
       setFiringTankId(null);
       setDamagedPlayerId(null);
     });
-
+    await new Promise((r) => requestAnimationFrame(r));
     await sleep(300);
   }
 
