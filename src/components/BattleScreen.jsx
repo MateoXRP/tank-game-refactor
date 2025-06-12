@@ -254,7 +254,7 @@ export default function BattleScreen() {
       <div className="flex flex-1">
         {/* Left main battle area */}
         <div className="flex flex-col items-center flex-1 p-4">
-          <div className="flex justify-center gap-28 mt-4 max-w-[600px]">
+          <div className="flex justify-center gap-16 mt-4 max-w-[600px]">
             <TankDisplay
               entities={tanks}
               type="player"
