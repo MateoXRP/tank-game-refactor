@@ -133,7 +133,7 @@ export default function ShopScreen() {
           className="mt-10 bg-yellow-500 hover:bg-yellow-600 px-6 py-2 rounded font-bold text-black"
           onClick={startBattle}
         >
-          🚀 Start Battle
+          💣 Start Battle
         </button>
       </div>
     </div>
