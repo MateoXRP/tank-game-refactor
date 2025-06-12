@@ -1,3 +1,4 @@
+// components/ShopScreen.jsx
 import React from "react";
 import { useGame } from "../context/GameContext";
 
@@ -11,6 +12,7 @@ export default function ShopScreen() {
     currentBattle,
     setCurrentScreen,
     repairTank,
+    playerName,
   } = useGame();
 
   const startBattle = () => {
@@ -24,110 +26,116 @@ export default function ShopScreen() {
     tank.hp < tank.maxHp && gold >= 10;
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono p-4 flex flex-col items-center">
-      <div className="text-center max-w-md w-full space-y-4">
-        <h1 className="text-3xl font-bold text-yellow-300 mb-1">🪖 Tank Game</h1>
-        <p className="text-sm text-gray-300">
-          Level {currentLevel} – Battle {currentBattle}/5
-        </p>
-        <p className="text-sm text-yellow-400 font-bold mt-1">💰 Gold: {gold}</p>
-        <h2 className="text-xl mb-2">💰 Upgrade Shop</h2>
+    <div className="min-h-screen bg-black text-white font-sans flex flex-col">
+      {/* Top Bar */}
+      <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-base shadow-md border-b border-gray-800">
+        <div className="text-white font-bold">
+          🪖 Tank Game — 🛒Shop L{currentLevel}B{currentBattle}
+        </div>
+        <div className="text-gray-300 font-medium">
+          {playerName} | 💰 {gold}
+        </div>
+      </div>
 
-        {tanks.map((tank) => (
-          <div key={tank.id} className="p-4 bg-gray-800 rounded-lg shadow">
-            <img
-              src={`/tank${tank.id}.png`}
-              alt={`Tank ${tank.id}`}
-              className="w-20 h-20 object-contain mx-auto mb-2"
-            />
-            <p className="mb-1 font-semibold">
-              Tank {tank.id}{" "}
-              <span className="text-yellow-400 text-sm">
-                (Lvl {tank.level || 1})
-              </span>
-            </p>
-            <p className="text-sm mb-1">
-              HP: {tank.hp} | ATK: {tank.atk} | DEF: {tank.def}
-            </p>
-            {isFullyUpgraded(tank) && (
-              <p className="text-green-400 text-sm mb-2">🧨 Missile Ready</p>
-            )}
+      {/* Main Content */}
+      <div className="flex flex-col items-center px-4 py-6">
+        <div className="flex flex-col gap-6 w-full items-center">
+          {tanks.map((tank) => (
+            <div key={tank.id} className="w-full max-w-sm p-4 bg-gray-800 rounded-lg shadow flex flex-col items-center">
+              <img
+                src={`/tank${tank.id}.png`}
+                alt={`Tank ${tank.id}`}
+                className="w-20 h-20 object-contain mb-3"
+              />
+              <p className="font-semibold text-white mb-1">
+                Tank {tank.id}{" "}
+                <span className="text-yellow-400 text-sm">
+                  (Lvl {tank.level || 1})
+                </span>
+              </p>
+              <p className="text-sm text-gray-300 mb-2">
+                HP: {tank.hp} | ATK: {tank.atk} | DEF: {tank.def}
+              </p>
 
-            <div className="flex justify-center gap-4 my-2">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-3 h-3 rounded-sm ${
-                      i < hasUpgrade(tank, "atk")
-                        ? "bg-yellow-400"
-                        : "bg-gray-600"
-                    }`}
-                  ></div>
-                ))}
-                <span className="text-xs text-blue-300 ml-1">ATK</span>
+              {isFullyUpgraded(tank) && (
+                <p className="text-green-400 text-sm mb-2">🧨 Missile Ready</p>
+              )}
+
+              <div className="flex justify-center gap-4 mb-2">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-sm ${
+                        i < hasUpgrade(tank, "atk")
+                          ? "bg-yellow-400"
+                          : "bg-gray-600"
+                      }`}
+                    ></div>
+                  ))}
+                  <span className="text-xs text-blue-300 ml-1">ATK</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-sm ${
+                        i < hasUpgrade(tank, "def")
+                          ? "bg-yellow-400"
+                          : "bg-gray-600"
+                      }`}
+                    ></div>
+                  ))}
+                  <span className="text-xs text-green-300 ml-1">DEF</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-3 h-3 rounded-sm ${
-                      i < hasUpgrade(tank, "def")
-                        ? "bg-yellow-400"
-                        : "bg-gray-600"
-                    }`}
-                  ></div>
-                ))}
-                <span className="text-xs text-green-300 ml-1">DEF</span>
+
+              <div className="flex justify-center space-x-2 mt-2 flex-wrap gap-2">
+                <button
+                  disabled={hasUpgrade(tank, "atk") >= 5 || gold < 20}
+                  className={`px-3 py-1 rounded text-sm transition ${
+                    hasUpgrade(tank, "atk") >= 5 || gold < 20
+                      ? "opacity-50 cursor-not-allowed bg-gray-700"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                  onClick={() => buyUpgrade(tank.id, "atk")}
+                >
+                  +5 ATK (20💰)
+                </button>
+                <button
+                  disabled={hasUpgrade(tank, "def") >= 5 || gold < 20}
+                  className={`px-3 py-1 rounded text-sm transition ${
+                    hasUpgrade(tank, "def") >= 5 || gold < 20
+                      ? "opacity-50 cursor-not-allowed bg-gray-700"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                  onClick={() => buyUpgrade(tank.id, "def")}
+                >
+                  +5 DEF (20💰)
+                </button>
+                <button
+                  disabled={!canRepair(tank)}
+                  onClick={() => repairTank(tank.id)}
+                  className={`px-3 py-1 rounded text-sm transition ${
+                    !canRepair(tank)
+                      ? "opacity-50 cursor-not-allowed bg-gray-700"
+                      : "bg-orange-500 hover:bg-orange-600"
+                  }`}
+                >
+                  🛠 Repair (10💰)
+                </button>
               </div>
             </div>
-
-            <div className="flex justify-center space-x-2 mt-2 flex-wrap gap-2">
-              <button
-                disabled={hasUpgrade(tank, "atk") >= 5 || gold < 20}
-                className={`px-3 py-1 rounded text-sm transition ${
-                  hasUpgrade(tank, "atk") >= 5
-                    ? "opacity-50 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-                onClick={() => buyUpgrade(tank.id, "atk")}
-              >
-                +5 ATK (20g)
-              </button>
-              <button
-                disabled={hasUpgrade(tank, "def") >= 5 || gold < 20}
-                className={`px-3 py-1 rounded text-sm transition ${
-                  hasUpgrade(tank, "def") >= 5
-                    ? "opacity-50 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700"
-                }`}
-                onClick={() => buyUpgrade(tank.id, "def")}
-              >
-                +5 DEF (20g)
-              </button>
-              <button
-                disabled={!canRepair(tank)}
-                onClick={() => repairTank(tank.id)}
-                className={`px-3 py-1 rounded text-sm transition ${
-                  !canRepair(tank)
-                    ? "opacity-50 cursor-not-allowed"
-                    : "bg-orange-500 hover:bg-orange-600"
-                }`}
-              >
-                🛠 Repair (10g)
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         <button
-          className="mt-4 bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded font-bold"
+          className="mt-10 bg-yellow-500 hover:bg-yellow-600 px-6 py-2 rounded font-bold text-black"
           onClick={startBattle}
         >
-          Start Battle
+          🚀 Start Battle
         </button>
       </div>
     </div>
   );
 }
-

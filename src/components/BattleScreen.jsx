@@ -11,7 +11,6 @@ import generateEnemies from "../helpers/generateEnemies";
 import BattleLog from "./BattleLog";
 import TankDisplay from "./TankDisplay";
 import WeaponSelector from "./WeaponSelector";
-import TargetSelector from "./TargetSelector";
 import FireButton from "./FireButton";
 
 export default function BattleScreen() {
@@ -25,6 +24,7 @@ export default function BattleScreen() {
     gold,
     setGold,
     setCurrentScreen,
+    playerName,
   } = useGame();
 
   const [selectedEnemyId, setSelectedEnemyId] = useState(null);
@@ -95,15 +95,8 @@ export default function BattleScreen() {
     let newLog = [];
 
     if (selectedWeapon === "airstrike") {
-      // No firing animation for airstrike
       await sleep(200);
-
-      // Show damage animation on all enemies simultaneously
-      const hitEnemyIds = newEnemyState
-        .filter((enemy) => enemy.hp > 0)
-        .map((enemy) => enemy.id);
-
-      flushSync(() => setDamagedEnemyId(-1)); // Signal all enemies
+      flushSync(() => setDamagedEnemyId(-1));
       await sleep(200);
 
       newEnemyState = newEnemyState.map((enemy) => {
@@ -247,57 +240,62 @@ export default function BattleScreen() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono p-4 flex flex-col items-center">
-      <h1 className="text-3xl font-bold text-yellow-300 mb-1">🪖 Tank Game</h1>
-      <p className="text-sm text-gray-300">
-        Level {currentLevel} – Battle {currentBattle}/5
-      </p>
-      <p className="text-sm text-yellow-400 font-bold mt-1">💰 Gold: {gold}</p>
-
-      <div className="flex justify-center gap-28 mt-4 max-w-[600px]">
-        <TankDisplay
-          entities={tanks}
-          type="player"
-          firingTankId={firingTankId}
-          damagedId={damagedPlayerId}
-        />
-        <TankDisplay
-          entities={enemyState}
-          type="enemy"
-          firingTankId={firingTankId}
-          damagedId={damagedEnemyId}
-        />
+    <div className="min-h-screen bg-black text-white font-mono flex flex-col">
+      {/* Top Bar */}
+      <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-base shadow-md border-b border-gray-800">
+        <div className="text-white font-bold">
+          🪖 Tank Game — 💥Battle L{currentLevel}B{currentBattle}
+        </div>
+        <div className="text-gray-300 font-medium">
+          {playerName} | 💰 {gold}
+        </div>
       </div>
 
-      <p className="mt-6 text-sm text-green-400 font-semibold">
-        🎯 Current Turn: Tank {currentTank.id}
-      </p>
+      <div className="flex flex-1">
+        {/* Left main battle area */}
+        <div className="flex flex-col items-center flex-1 p-4">
+          <div className="flex justify-center gap-28 mt-4 max-w-[600px]">
+            <TankDisplay
+              entities={tanks}
+              type="player"
+              firingTankId={firingTankId}
+              damagedId={damagedPlayerId}
+            />
+            <TankDisplay
+              entities={enemyState}
+              type="enemy"
+              firingTankId={firingTankId}
+              damagedId={damagedEnemyId}
+              selectedEnemyId={selectedEnemyId}
+              setSelectedEnemyId={setSelectedEnemyId}
+            />
+          </div>
 
-      <TargetSelector
-        enemyState={enemyState}
-        selectedEnemyId={selectedEnemyId}
-        setSelectedEnemyId={setSelectedEnemyId}
-      />
+          <p className="mt-6 text-sm text-green-400 font-semibold">
+            🎯 Current Turn: Tank {currentTank.id}
+          </p>
 
-      <WeaponSelector
-        weaponList={weaponList}
-        currentTank={currentTank}
-        selectedWeapon={selectedWeapon}
-        setSelectedWeapon={setSelectedWeapon}
-        isWeaponAvailable={isWeaponAvailable}
-      />
+          <WeaponSelector
+            weaponList={weaponList}
+            currentTank={currentTank}
+            selectedWeapon={selectedWeapon}
+            setSelectedWeapon={setSelectedWeapon}
+            isWeaponAvailable={isWeaponAvailable}
+          />
 
-      <FireButton
-        handleFire={handleFire}
-        selectedWeapon={selectedWeapon}
-        enemyTurnActive={enemyTurnActive}
-        currentTank={currentTank}
-      />
+          <FireButton
+            handleFire={handleFire}
+            selectedWeapon={selectedWeapon}
+            enemyTurnActive={enemyTurnActive}
+            currentTank={currentTank}
+          />
+        </div>
 
-      <div className="mt-3">
-        <BattleLog log={log} />
+        {/* Right sidebar for Battle Log */}
+        <div className="w-80 border-l border-gray-800 p-4 bg-gray-950">
+          <BattleLog log={log} />
+        </div>
       </div>
     </div>
   );
 }
-
