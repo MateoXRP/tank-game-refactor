@@ -33,7 +33,7 @@ export default function ShopScreen() {
           🪖 Tank Game 🛒 Shop L{currentLevel}B{currentBattle}
         </div>
         <div className="text-gray-300 font-medium">
-          {playerName} | 💰 {gold}
+          {playerName} 💰 {gold}
         </div>
       </div>
 

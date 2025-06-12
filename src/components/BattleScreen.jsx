@@ -247,7 +247,7 @@ export default function BattleScreen() {
           🪖 Tank Game 💥 Battle L{currentLevel}B{currentBattle}
         </div>
         <div className="text-gray-300 font-medium">
-          {playerName} | 💰 {gold}
+          {playerName} 💰 {gold}
         </div>
       </div>
 
