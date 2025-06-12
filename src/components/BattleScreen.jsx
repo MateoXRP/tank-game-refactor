@@ -244,7 +244,7 @@ export default function BattleScreen() {
       {/* Top Bar */}
       <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-base shadow-md border-b border-gray-800">
         <div className="text-white font-bold">
-          🪖 Tank Game — 💥Battle L{currentLevel}B{currentBattle}
+          🪖 Tank Game 💥 Battle L{currentLevel}B{currentBattle}
         </div>
         <div className="text-gray-300 font-medium">
           {playerName} | 💰 {gold}
