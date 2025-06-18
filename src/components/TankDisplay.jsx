@@ -25,24 +25,29 @@ export default function TankDisplay({
           <div
             key={entity.id}
             onClick={clickHandler}
-            className={`bg-gray-800 rounded-lg shadow-md flex flex-col items-center px-3 py-2 transition duration-150 w-40 h-44
+            className={`bg-gray-800 rounded-lg shadow-md flex flex-col items-center px-2 py-2 transition duration-150 
+              w-28 h-32 sm:w-32 sm:h-36 md:w-36 md:h-40
               ${type === "enemy" && setSelectedEnemyId ? "cursor-pointer hover:scale-105" : ""}
               ${isSelected ? "ring-4 ring-yellow-400" : ""}
             `}
           >
-            <div className="flex items-center justify-center w-32 h-32">
+            <div className="flex items-center justify-center w-full h-24 sm:h-28">
               <img
                 src={type === "player" ? tankImg : enemyImg}
                 className={`max-w-full max-h-full ${
-                  type === "enemy" && entity.type === "brute" ? "w-24" : "w-20"
+                  type === "enemy" && entity.type === "brute"
+                    ? "w-16 sm:w-20 md:w-28"
+                    : "w-14 sm:w-18 md:w-24"
                 } ${
-                  firingTankId === (type === "player" ? entity.id : entity.id + 100) ? "shake" : ""
+                  firingTankId === (type === "player" ? entity.id : entity.id + 100)
+                    ? "shake"
+                    : ""
                 } ${damagedId === entity.id ? "glow-red shake" : ""}`}
                 alt={type === "player" ? `Tank ${entity.id}` : entity.name}
               />
             </div>
 
-            <div className="text-xs text-center mt-1 w-full leading-tight">
+            <div className="text-[10px] sm:text-xs text-center mt-1 w-full leading-tight">
               <p className="font-semibold">
                 {type === "player"
                   ? `Tank ${entity.id} (L${entity.level ?? 1})`
@@ -54,11 +59,11 @@ export default function TankDisplay({
                   style={{ width: `${(entity.hp / entity.maxHp) * 100}%` }}
                 ></div>
               </div>
-              <p className="text-xs">
+              <p>
                 HP: {entity.hp} / {entity.maxHp}
               </p>
               {type === "player" && (
-                <p className="text-[10px] text-yellow-300 mt-1">
+                <p className="text-[9px] sm:text-[10px] text-yellow-300 mt-1">
                   🔫 {entity.atk} 🛡️ {entity.def} 🎖️ {entity.exp}/{entity.expToNext}
                 </p>
               )}
