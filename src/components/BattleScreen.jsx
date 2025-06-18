@@ -251,10 +251,10 @@ export default function BattleScreen() {
         </div>
       </div>
 
-      <div className="flex flex-1">
-        {/* Left main battle area */}
+      <div className="flex flex-1 flex-col lg:flex-row">
+        {/* Main Battle Area */}
         <div className="flex flex-col items-center flex-1 p-4">
-          <div className="flex justify-center gap-16 mt-4 max-w-[600px]">
+          <div className="flex justify-center gap-6 sm:gap-10 mt-4 max-w-full flex-wrap">
             <TankDisplay
               entities={tanks}
               type="player"
@@ -271,7 +271,7 @@ export default function BattleScreen() {
             />
           </div>
 
-          <p className="mt-6 text-sm text-green-400 font-semibold">
+          <p className="mt-4 text-sm text-green-400 font-semibold">
             🎯 Current Turn: Tank {currentTank.id}
           </p>
 
@@ -289,10 +289,15 @@ export default function BattleScreen() {
             enemyTurnActive={enemyTurnActive}
             currentTank={currentTank}
           />
+
+          {/* Battle Log on mobile */}
+          <div className="block lg:hidden w-full mt-6 max-w-md mx-auto">
+            <BattleLog log={log} />
+          </div>
         </div>
 
-        {/* Right sidebar for Battle Log */}
-        <div className="w-80 border-l border-gray-800 p-4 bg-gray-950">
+        {/* Battle Log on desktop */}
+        <div className="hidden lg:block w-80 border-l border-gray-800 p-4 bg-gray-950">
           <BattleLog log={log} />
         </div>
       </div>
