@@ -47,7 +47,7 @@ export default function TankDisplay({
               />
             </div>
 
-            <div className="text-[10px] sm:text-xs text-center mt-1 w-full leading-tight">
+            <div className="text-[7px] sm:text-[8px] md:text-[9px] text-center mt-1 w-full leading-tight">
               <p className="font-semibold">
                 {type === "player"
                   ? `Tank ${entity.id} (L${entity.level ?? 1})`
@@ -63,7 +63,7 @@ export default function TankDisplay({
                 HP: {entity.hp} / {entity.maxHp}
               </p>
               {type === "player" && (
-                <p className="text-[9px] sm:text-[10px] text-yellow-300 mt-1">
+                <p className="text-[6px] sm:text-[7px] md:text-[8px] text-yellow-300 mt-1">
                   🔫 {entity.atk} 🛡️ {entity.def} 🎖️ {entity.exp}/{entity.expToNext}
                 </p>
               )}
