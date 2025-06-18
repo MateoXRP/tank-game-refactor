@@ -22,13 +22,12 @@ export default function ShopScreen() {
   const isFullyUpgraded = (tank) =>
     hasUpgrade(tank, "atk") === 5 && hasUpgrade(tank, "def") === 5;
 
-  const canRepair = (tank) =>
-    tank.hp < tank.maxHp && gold >= 10;
+  const canRepair = (tank) => tank.hp < tank.maxHp && gold >= 10;
 
   return (
     <div className="min-h-screen bg-black text-white font-sans flex flex-col">
-      {/* Top Bar */}
-      <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-base shadow-md border-b border-gray-800">
+      {/* Top Bar with responsive text size */}
+      <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-sm sm:text-base md:text-lg shadow-md border-b border-gray-800">
         <div className="text-white font-bold">
           🪖 Tank Game 🛒 Shop L{currentLevel}B{currentBattle}
         </div>
@@ -41,7 +40,10 @@ export default function ShopScreen() {
       <div className="flex flex-col items-center px-4 py-6">
         <div className="flex flex-col gap-6 w-full items-center">
           {tanks.map((tank) => (
-            <div key={tank.id} className="w-full max-w-sm p-4 bg-gray-800 rounded-lg shadow flex flex-col items-center">
+            <div
+              key={tank.id}
+              className="w-full max-w-sm p-4 bg-gray-800 rounded-lg shadow flex flex-col items-center"
+            >
               <img
                 src={`/tank${tank.id}.png`}
                 alt={`Tank ${tank.id}`}

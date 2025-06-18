@@ -34,7 +34,7 @@ export default function TankDisplay({
               <img
                 src={type === "player" ? tankImg : enemyImg}
                 className={`max-w-full max-h-full ${
-                  type === "enemy" && entity.type === "brute" ? "w-28" : "w-24"
+                  type === "enemy" && entity.type === "brute" ? "w-24" : "w-20"
                 } ${
                   firingTankId === (type === "player" ? entity.id : entity.id + 100) ? "shake" : ""
                 } ${damagedId === entity.id ? "glow-red shake" : ""}`}

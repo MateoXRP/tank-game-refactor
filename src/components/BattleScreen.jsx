@@ -242,14 +242,15 @@ export default function BattleScreen() {
   return (
     <div className="min-h-screen bg-black text-white font-mono flex flex-col">
       {/* Top Bar */}
-      <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-base shadow-md border-b border-gray-800">
-        <div className="text-white font-bold">
-          🪖 Tank Game 💥 Battle L{currentLevel}B{currentBattle}
-        </div>
-        <div className="text-gray-300 font-medium">
-          {playerName} 💰 {gold}
-        </div>
-      </div>
+      <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-base sm:text-base text-sm shadow-md border-b border-gray-800">
+  <div className="text-white font-bold">
+    🪖 Tank Game 💥 Battle L{currentLevel}B{currentBattle}
+  </div>
+  <div className="text-gray-300 font-medium">
+    {playerName} 💰 {gold}
+  </div>
+</div>
+
 
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Main Battle Area */}
